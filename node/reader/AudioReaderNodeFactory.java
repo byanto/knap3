@@ -6,11 +6,11 @@ import org.knime.core.node.NodeView;
 
 /**
  * <code>NodeFactory</code> for the "AudioReader" Node.
- * 
+ *
  *
  * @author Budi Yanto, KNIME.com
  */
-public class AudioReaderNodeFactory 
+public class AudioReaderNodeFactory
         extends NodeFactory<AudioReaderNodeModel> {
 
     /**
@@ -26,7 +26,7 @@ public class AudioReaderNodeFactory
      */
     @Override
     public int getNrNodeViews() {
-        return 1;
+        return 0;
     }
 
     /**

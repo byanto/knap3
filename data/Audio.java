@@ -48,8 +48,14 @@
  */
 package org.knime.base.node.audio3.data;
 
-import java.util.UUID;
+import java.io.File;
+import java.io.IOException;
 
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.UnsupportedAudioFileException;
+
+import org.apache.commons.io.FilenameUtils;
 import org.knime.base.node.audio2.data.AudioBuilder;
 
 /**
@@ -57,8 +63,9 @@ import org.knime.base.node.audio2.data.AudioBuilder;
  * @author Budi Yanto, KNIME.com
  */
 public class Audio {
-    private final UUID m_uuid = UUID.randomUUID();
+
     private String m_filePath;
+    private AudioFileFormat m_audioFileFormat;
 
     /**
      * Prevent to directly create a new audio instance.
@@ -66,8 +73,9 @@ public class Audio {
      */
     Audio(){}
 
-    Audio(final String filePath){
+    Audio(final String filePath) throws UnsupportedAudioFileException, IOException{
         m_filePath = filePath;
+        m_audioFileFormat = AudioSystem.getAudioFileFormat(new File(filePath));
     }
 
     /**
@@ -85,9 +93,16 @@ public class Audio {
     }
 
     /**
-     * @return the uuid
+     * @return the name of the audio file
      */
-    public UUID getUuid() {
-        return m_uuid;
+    public String getName(){
+        return FilenameUtils.getName(m_filePath);
+    }
+
+    /**
+     * @return the {@link AudioFileFormat} of the audio file
+     */
+    public AudioFileFormat getAudioFileFormat(){
+        return m_audioFileFormat;
     }
 }

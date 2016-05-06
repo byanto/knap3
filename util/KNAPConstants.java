@@ -44,23 +44,34 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 6, 2016 (budiyanto): created
+ *   May 7, 2016 (budiyanto): created
  */
-package org.knime.base.node.audio3.data;
-
-import java.io.IOException;
-
-import javax.sound.sampled.UnsupportedAudioFileException;
+package org.knime.base.node.audio3.util;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class AudioBuilder {
+public class KNAPConstants {
 
-    public static Audio createAudio(final String filePath)
-            throws UnsupportedAudioFileException, IOException{
-        return new Audio(filePath);
-    }
+    /** Prevent the creation of a new instance. */
+    private KNAPConstants() {}
+
+    /**
+     * Suffix to be added to files if they are zip compressed.
+     */
+    public static final String ZIP_SUFFIX = ".zip";
+
+    /** The default column label for audio column selection in DialogCompoent */
+    public static final String AUDIO_COL_LABEL = "Audio Column";
+
+    /** The default column name for audio cell */
+    public static final String AUDIO_COL_NAME = "Audio";
+
+    /** The dimension of the samples in Img */
+    public static final int SAMPLES_DIMENSION = 0;
+
+    /** The dimension of the channel in Img */
+    public static final int CHANNEL_DIMENSION = 1;
 
 }

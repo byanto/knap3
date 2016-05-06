@@ -46,21 +46,18 @@
  * History
  *   May 6, 2016 (budiyanto): created
  */
-package org.knime.base.node.audio3.data;
-
-import java.io.IOException;
-
-import javax.sound.sampled.UnsupportedAudioFileException;
+package org.knime.base.node.audio3.util;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class AudioBuilder {
+public class AudioUtils {
 
-    public static Audio createAudio(final String filePath)
-            throws UnsupportedAudioFileException, IOException{
-        return new Audio(filePath);
-    }
+    /**
+     * Prevent to directly create a new instance.
+     * Only use the static methods
+     */
+    private AudioUtils() {}
 
 }

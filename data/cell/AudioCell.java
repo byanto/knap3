@@ -48,8 +48,16 @@
  */
 package org.knime.base.node.audio3.data.cell;
 
+import java.io.IOException;
+
+import javax.sound.sampled.UnsupportedAudioFileException;
+
 import org.knime.base.node.audio3.data.Audio;
+import org.knime.base.node.audio3.data.AudioBuilder;
 import org.knime.core.data.DataCell;
+import org.knime.core.data.DataCellDataInput;
+import org.knime.core.data.DataCellDataOutput;
+import org.knime.core.data.DataCellSerializer;
 import org.knime.core.data.DataType;
 import org.knime.core.data.StringValue;
 
@@ -58,6 +66,37 @@ import org.knime.core.data.StringValue;
  * @author Budi Yanto, KNIME.com
  */
 public class AudioCell extends DataCell implements AudioValue, StringValue{
+
+    /**
+     * Serializer for <code>AudioCell</code>s.
+     * @noreference This class is not intended to be referenced by clients.
+     */
+    public static final class AudioSerializer implements DataCellSerializer<AudioCell> {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void serialize(final AudioCell cell, final DataCellDataOutput output) throws IOException {
+            output.writeUTF(cell.getAudio().getFilePath());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public AudioCell deserialize(final DataCellDataInput input) throws IOException {
+            final String filePath = input.readUTF();
+            final Audio audio;
+            try{
+                audio = AudioBuilder.createAudio(filePath);
+            } catch(UnsupportedAudioFileException ex){
+                throw new IOException(ex);
+            }
+            return new AudioCell(audio);
+        }
+
+    }
 
     /**
      * Automatically generated Version UID
@@ -79,6 +118,9 @@ public class AudioCell extends DataCell implements AudioValue, StringValue{
      * A new audio cell should only be created using {@link AudioCellFactory}.
      */
     AudioCell(final Audio audio){
+        if(audio == null){
+            throw new IllegalArgumentException("Audio cannot be null.");
+        }
         m_audio = audio;
     }
 
