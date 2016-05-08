@@ -249,12 +249,12 @@ public class FileChooserPanel extends JPanel {
 	class AudioPreviewListener implements PropertyChangeListener {
 
 //	    private final AudioPreviewPanel audioPreviewPanel;
-	    private final AudioPreviewPanel2 audioPreviewPanel;
+	    private final AudioPreviewPanel audioPreviewPanel;
 
 	    /**
          *
          */
-        AudioPreviewListener(final AudioPreviewPanel2 previewPanel) {
+        AudioPreviewListener(final AudioPreviewPanel previewPanel) {
             audioPreviewPanel = previewPanel;
         }
 
@@ -387,7 +387,7 @@ public class FileChooserPanel extends JPanel {
 
 	private final MacHackedFileChooserPanel m_fileChooser;
 
-	private final AudioPreviewPanel2 m_audioPreviewPanel;
+	private final AudioPreviewPanel m_audioPreviewPanel;
 
 	private List<ChangeListener> m_listeners;
 
@@ -490,7 +490,7 @@ public class FileChooserPanel extends JPanel {
 		delButtonPan.add(m_remAllButton);
 		delButtonPan.add(Box.createVerticalStrut(20));
 
-		m_audioPreviewPanel = new AudioPreviewPanel2();
+		m_audioPreviewPanel = new AudioPreviewPanel();
 
 		final ApplyFileView view = new ApplyFileView();
 		m_fileChooser.setFileView(view);

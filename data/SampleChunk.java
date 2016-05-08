@@ -44,67 +44,50 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 6, 2016 (budiyanto): created
+ *   May 8, 2016 (budiyanto): created
  */
 package org.knime.base.node.audio3.data;
 
-import java.io.File;
-import java.io.IOException;
-
-import javax.sound.sampled.AudioFileFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.UnsupportedAudioFileException;
-
-import org.knime.base.node.audio2.data.AudioBuilder;
+import javax.sound.sampled.AudioFormat;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class Audio {
+public class SampleChunk {
 
-    private File m_file;
-    private AudioFileFormat m_audioFileFormat;
+    /** The samples in the chunk */
+    private byte[] m_samples = new byte[1];
+
+    /** The audio format of the chunk */
+    private final AudioFormat m_audioFormat;
 
     /**
-     * Prevent to directly create a new audio instance.
-     * A new audio instance should only be created using {@link AudioBuilder}.
+     * A new sample chunk should only be created using {@link SampleChunkFactory}
      */
-    Audio(){}
+    SampleChunk(final byte[] samples, final AudioFormat audioFormat){
+        setSamples(samples);
+        m_audioFormat = audioFormat;
+    }
 
-    Audio(final File file) throws UnsupportedAudioFileException, IOException{
-        if(file == null){
-            throw new IllegalArgumentException("The input file cannot be null.");
+    private void setSamples(final byte[] samples){
+        synchronized (m_samples) {
+            m_samples = samples;
         }
-        if(file.isDirectory()){
-            throw new IllegalArgumentException("File " + file.getName() + " is a directory.");
-        }
-        if(!file.exists()){
-            throw new IllegalArgumentException("File " + file.getName() + " doesn't exist.");
-        }
-        m_file = file;
-        m_audioFileFormat = AudioSystem.getAudioFileFormat(m_file);
     }
 
     /**
-     * @return the filePath
+     * @return the samples in the chunk
      */
-    public File getFile() {
-        return m_file;
+    public byte[] getSamples(){
+        return m_samples;
     }
 
     /**
-     * @return the name of the audio file
+     * @return the audio format of the chunk
      */
-    public String getName(){
-        return m_file.getName();
-    }
-
-    /**
-     * @return the {@link AudioFileFormat} of the audio file
-     */
-    public AudioFileFormat getAudioFileFormat(){
-        return m_audioFileFormat;
+    public AudioFormat getAudioFormat() {
+        return m_audioFormat;
     }
 
 }

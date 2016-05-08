@@ -71,18 +71,18 @@ import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 
-import org.knime.base.node.audio.data.KNAudio;
-import org.knime.base.node.audio.ext.org.openimaj.audio.AudioEventListener;
-import org.knime.base.node.audio.ext.org.openimaj.audio.AudioPlayer;
-import org.knime.base.node.audio.ext.org.openimaj.audio.AudioPlayer.Mode;
-import org.knime.base.node.audio.util.AudioUtils;
-import org.knime.base.node.audio.ext.org.openimaj.audio.SampleChunk;
+import org.knime.base.node.audio3.data.AudioBuilder;
+import org.knime.base.node.audio3.data.SampleChunk;
+import org.knime.base.node.audio3.util.AudioErrorUtils;
+import org.knime.base.node.audio3.util.AudioEventListener;
+import org.knime.base.node.audio3.util.AudioPlayer;
+import org.knime.base.node.audio3.util.AudioUtils;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class AudioPreviewPanel2 extends JPanel{
+public class AudioPreviewPanel extends JPanel{
 
     private static final long serialVersionUID = 1L;
 
@@ -104,7 +104,7 @@ public class AudioPreviewPanel2 extends JPanel{
     /**
      *
      */
-    public AudioPreviewPanel2(){
+    public AudioPreviewPanel(){
         m_playbackTools.setLayout(new FlowLayout());
         m_playbackTools.setFloatable(false);
         m_playbackTools.add(m_buttonPlay);
@@ -153,66 +153,65 @@ public class AudioPreviewPanel2 extends JPanel{
         m_fileLabel.setText(file.getName());
     }
 
-    void onPlay(){
-        if(m_player != null && m_player.getMode() == Mode.PAUSE){
-            m_player.run();
-            return;
+    void onPlay() {
+        try{
+            if(m_player != null && m_player.isPaused()){
+                m_player.play();
+                return;
+            }
+            if(m_player != null && m_player.isPlaying()){
+                m_player.stop();
+                m_player = null;
+            }
+            m_player = new AudioPlayer(AudioBuilder.createAudio(m_selectedFile));
+            m_player.addAudioEventListener(new AudioWaveDrawer());
+            m_player.start();
+        } catch(Exception ex){
+            AudioErrorUtils.showError(this, ex.getMessage(),
+                "Cannot open file: " + m_selectedFile.getName());
         }
 
-        if(m_player != null && m_player.getMode() == Mode.PLAY){
-            m_player.stop();
-            m_player = null;
-        }
-        m_player =  AudioPlayer.createAudioPlayer(new KNAudio(m_selectedFile),
-            new AudioWaveDrawer(m_displayPanel));
     }
 
-    void onPause(){
+    void onPause() {
         if(m_player != null){
             m_player.pause();
         }
     }
 
-    void onStop(){
+    void onStop() {
         if(m_player != null){
             m_player.stop();
         }
     }
 
-    private class AudioWaveDrawer implements AudioEventListener{
-        private final DisplayPanel m_panel;
-
-        private AudioWaveDrawer(final DisplayPanel panel){
-            if(panel == null){
-                throw new IllegalArgumentException("Display panel cannot be null");
-            }
-            m_panel = panel;
-        }
+    private class AudioWaveDrawer implements AudioEventListener {
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void beforePlay(final SampleChunk sc) {
-            final int nChannels = sc.getFormat().getNumChannels();
-            float[] samples = new float[AudioUtils.DEF_BUFFER_SAMPLE_SZ * nChannels];
+        public void beforePlay(final SampleChunk chunk) {
+            final int nrOfChannels = chunk.getAudioFormat().getChannels();
+            float[] samples = new float[1024 * nrOfChannels];
             long[] transfer = new long[samples.length];
-            final int normalBytes = AudioUtils.normalizeBytesFromBits(sc.getFormat().getNBits());
-            final int bread = sc.getSamples().length;
-            final AudioFormat javaAudioFormat = sc.getFormat().getJavaAudioFormat();
-            samples = AudioUtils.unpack(sc.getSamples(), transfer, samples, bread, javaAudioFormat);
-            samples = AudioUtils.window(samples, bread / normalBytes, javaAudioFormat);
+            final int bread = chunk.getSamples().length;
+            final AudioFormat audioFormat = chunk.getAudioFormat();
+            final int normalizedBytes = AudioUtils.normalizeBytesFromBits(
+                audioFormat.getSampleSizeInBits());
+            samples = AudioUtils.unpack(chunk.getSamples(), transfer, samples,
+                bread, audioFormat);
+            samples = AudioUtils.window(samples, bread / normalizedBytes, audioFormat);
 
-            m_panel.makePath(nChannels, samples, bread / normalBytes);
-            m_panel.repaint();
+            m_displayPanel.makePath(nrOfChannels, samples, bread / normalizedBytes);
+            m_displayPanel.repaint();
         }
 
         /**
          * {@inheritDoc}
          */
         @Override
-        public void afterPlay(final AudioPlayer ap, final SampleChunk sc) {
-            // TODO Auto-generated method stub
+        public void afterPlay(final SampleChunk chunk) {
 
         }
 
@@ -220,9 +219,9 @@ public class AudioPreviewPanel2 extends JPanel{
          * {@inheritDoc}
          */
         @Override
-        public void audioEnded() {
-            m_panel.reset();
-            m_panel.repaint();
+        public void playEnded() {
+            m_displayPanel.reset();
+            m_displayPanel.repaint();
         }
 
     }
@@ -342,7 +341,7 @@ public class AudioPreviewPanel2 extends JPanel{
 
         @Override
         public Dimension getPreferredSize() {
-            return new Dimension(AudioUtils.DEF_BUFFER_SAMPLE_SZ / 2, 128);
+            return new Dimension(1024 / 2, 128);
         }
 
         @Override

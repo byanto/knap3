@@ -79,7 +79,7 @@ public class AudioViewerNodeView extends NodeView<AudioViewerNodeModel> {
 
         int idx = 1;
         for(final Audio audio : audioList){
-            tableModel.addRow(new Object[]{idx++, audio.getFilePath()});
+            tableModel.addRow(new Object[]{idx++, audio.getFile().getAbsolutePath()});
         }
 
         final JTable table = new JTable(tableModel);

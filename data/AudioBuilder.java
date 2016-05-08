@@ -48,6 +48,7 @@
  */
 package org.knime.base.node.audio3.data;
 
+import java.io.File;
 import java.io.IOException;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
@@ -60,7 +61,12 @@ public class AudioBuilder {
 
     public static Audio createAudio(final String filePath)
             throws UnsupportedAudioFileException, IOException{
-        return new Audio(filePath);
+        return createAudio(new File(filePath));
+    }
+
+    public static Audio createAudio(final File file)
+            throws UnsupportedAudioFileException, IOException{
+        return new Audio(file);
     }
 
 }

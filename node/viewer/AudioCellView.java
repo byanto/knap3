@@ -50,23 +50,40 @@ package org.knime.base.node.audio3.node.viewer;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.io.IOException;
 
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import org.knime.base.node.audio3.data.Audio;
+import org.knime.base.node.audio3.util.AudioUtils;
+import org.knime.core.node.NodeLogger;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
 class AudioCellView extends JPanel{
+
+    /**
+     * Automatically generated Serial Version UID
+     */
+    private static final long serialVersionUID = -4234704116274105268L;
+
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(AudioCellView.class);
 
     private Audio m_audio;
 
@@ -95,6 +112,28 @@ class AudioCellView extends JPanel{
         final JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
         panel.setBorder(BorderFactory.createTitledBorder("Audio Wave"));
+
+        try {
+            final double[][] samples = AudioUtils.getSamples(m_audio);
+            for(int channel = 0; channel < samples.length; channel++){
+                final XYSeriesCollection dataset = new XYSeriesCollection();
+                final XYSeries series = new XYSeries("Audio Wave");
+                for(int i = 0; i < samples[channel].length; i++){
+                    series.add(i, samples[channel][i]);
+                }
+                dataset.addSeries(series);
+                JFreeChart chart = ChartFactory.createXYLineChart(
+                    "Channel " + (channel + 1), "Sample", "Value", dataset);
+                chart.removeLegend();
+                final JPanel chartPanel = new ChartPanel(chart);
+                panel.add(chartPanel);
+            }
+        } catch (UnsupportedAudioFileException | IOException ex) {
+            panel.add(new JLabel("Error generating audio wave panel for: "
+                    + m_audio.getName()));
+            LOGGER.error(ex.getMessage());
+        }
+
         return panel;
     }
 
@@ -118,11 +157,14 @@ class AudioCellView extends JPanel{
         };
 
         model.addRow(new Object[]{"Name", m_audio.getName()});
-        model.addRow(new Object[]{"Path", m_audio.getFilePath()});
+        model.addRow(new Object[]{"Path", m_audio.getFile().getAbsolutePath()});
+        model.addRow(new Object[]{"Length in Bytes", m_audio.getAudioFileFormat().getByteLength()});
+        model.addRow(new Object[]{"Length in Frames", m_audio.getAudioFileFormat().getFrameLength()});
+        model.addRow(new Object[]{"Type", m_audio.getAudioFileFormat().getType()});
 
         final AudioFormat format = m_audio.getAudioFileFormat().getFormat();
         model.addRow(new Object[]{"Encoding", format.getEncoding()});
-        model.addRow(new Object[]{"Sample Rate", format.getSampleRate()});
+        model.addRow(new Object[]{"Sample Rate in Hz", format.getSampleRate()});
         model.addRow(new Object[]{"Sample Size in Bits", format.getSampleSizeInBits()});
         model.addRow(new Object[]{"Channels", format.getChannels()});
         model.addRow(new Object[]{"Frame Size", format.getFrameSize()});
