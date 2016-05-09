@@ -87,6 +87,8 @@ class AudioCellView extends JPanel{
 
     private Audio m_audio;
 
+    private int m_totalSamples;
+
     AudioCellView(final Audio audio){
         m_audio = audio;
         setLayout(new BorderLayout());
@@ -115,6 +117,7 @@ class AudioCellView extends JPanel{
 
         try {
             final double[][] samples = AudioUtils.getSamples(m_audio);
+            m_totalSamples = samples[0].length;
             for(int channel = 0; channel < samples.length; channel++){
                 final XYSeriesCollection dataset = new XYSeriesCollection();
                 final XYSeries series = new XYSeries("Audio Wave");
@@ -156,13 +159,16 @@ class AudioCellView extends JPanel{
             }
         };
 
+        final AudioFormat format = m_audio.getAudioFileFormat().getFormat();
         model.addRow(new Object[]{"Name", m_audio.getName()});
         model.addRow(new Object[]{"Path", m_audio.getFile().getAbsolutePath()});
         model.addRow(new Object[]{"Length in Bytes", m_audio.getAudioFileFormat().getByteLength()});
+        model.addRow(new Object[]{"Length in Seconds",
+            AudioUtils.convertSamplesToTime(m_totalSamples, format.getSampleRate())});
         model.addRow(new Object[]{"Length in Frames", m_audio.getAudioFileFormat().getFrameLength()});
         model.addRow(new Object[]{"Type", m_audio.getAudioFileFormat().getType()});
 
-        final AudioFormat format = m_audio.getAudioFileFormat().getFormat();
+        // Audio Format
         model.addRow(new Object[]{"Encoding", format.getEncoding()});
         model.addRow(new Object[]{"Sample Rate in Hz", format.getSampleRate()});
         model.addRow(new Object[]{"Sample Size in Bits", format.getSampleSizeInBits()});

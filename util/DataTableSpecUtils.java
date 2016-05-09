@@ -44,61 +44,52 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 8, 2016 (budiyanto): created
+ *   Apr 13, 2016 (budiyanto): created
  */
-package org.knime.base.node.audio3.data;
+package org.knime.base.node.audio3.util;
 
-import javax.sound.sampled.AudioFormat;
+import org.knime.base.node.audio3.data.cell.AudioValue;
+import org.knime.core.data.DataColumnSpec;
+import org.knime.core.data.DataTableSpec;
+import org.knime.core.node.InvalidSettingsException;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class SampleChunk {
-
-    /** The samples in the chunk */
-//    private byte[] m_samples = new byte[1];
-
-//    private T m_samples;
-
-
-    /** The audio format of the chunk */
-    private final AudioFormat m_audioFormat;
+public final class DataTableSpecUtils {
 
     /**
-     * A new sample chunk should only be created using {@link SampleChunkFactory}
+     * @param spec the <code>DataTableSpec</code> to get the information
+     * @return the first audio column in the given <code>DataTableSpec</code>
      */
-    SampleChunk(final AudioFormat audioFormat){
-//        setSamples(samples);
-        m_audioFormat = audioFormat;
+    public static String getFirstAudioColumn(final DataTableSpec spec){
+        String result = null;
+        for(final DataColumnSpec colSpec : spec){
+            if(colSpec.getType().isCompatible(AudioValue.class)){
+                result = colSpec.getName();
+                break;
+            }
+        }
+        return result;
     }
-
-//    private void setSamples(final T samples){
-//        synchronized (m_samples) {
-//            m_samples = samples;
-//        }
-//    }
-//
-//    /**
-//     * @return the samples in the chunk
-//     */
-//    public T getSamples(){
-//        return m_samples;
-//    }
 
     /**
-     * @return the audio format of the chunk
+     * Verifies that the given column exists in the <code>DataTableSpec</code>
+     * @param spec the <code>DataTableSpec</code> to analyze
+     * @param column the column name to analyze
+     * @return the index of the column in the <code>DataTableSpec</code> if exists,
+     * otherwise -1
+     * @throws InvalidSettingsException if the column doesn't exist in the <code>DataTableSpec</code>
      */
-    public AudioFormat getAudioFormat() {
-        return m_audioFormat;
-    }
-
-    public enum ChunkType {
-        BYTE,
-
-        MONO_CHANNEL,
-
-        MULTI_CHANNELS
+    public static int verifyColumnInDataTableSpec(final DataTableSpec spec,
+            final String column) throws InvalidSettingsException {
+        final int colIndex = spec.findColumnIndex(column);
+        if(colIndex < 0){
+            throw new InvalidSettingsException(
+                "Column \"" + column + "\" doesn't exist in DataTableSpec");
+        }
+        return colIndex;
     }
 
 }

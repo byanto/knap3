@@ -44,7 +44,7 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 8, 2016 (budiyanto): created
+ *   May 9, 2016 (budiyanto): created
  */
 package org.knime.base.node.audio3.data;
 
@@ -54,51 +54,26 @@ import javax.sound.sampled.AudioFormat;
  *
  * @author Budi Yanto, KNIME.com
  */
-public class SampleChunk {
+public class MultiChannelSampleChunk extends SampleChunk{
 
-    /** The samples in the chunk */
-//    private byte[] m_samples = new byte[1];
+    private double[][] m_samples;
 
-//    private T m_samples;
-
-
-    /** The audio format of the chunk */
-    private final AudioFormat m_audioFormat;
-
-    /**
-     * A new sample chunk should only be created using {@link SampleChunkFactory}
-     */
-    SampleChunk(final AudioFormat audioFormat){
-//        setSamples(samples);
-        m_audioFormat = audioFormat;
+    MultiChannelSampleChunk(final AudioFormat audioFormat, final double[][] samples){
+        super(audioFormat);
+        setSamples(samples);
     }
 
-//    private void setSamples(final T samples){
-//        synchronized (m_samples) {
-//            m_samples = samples;
-//        }
-//    }
-//
-//    /**
-//     * @return the samples in the chunk
-//     */
-//    public T getSamples(){
-//        return m_samples;
-//    }
-
-    /**
-     * @return the audio format of the chunk
-     */
-    public AudioFormat getAudioFormat() {
-        return m_audioFormat;
+    private void setSamples(final double[][] samples){
+        synchronized (m_samples) {
+            m_samples = samples;
+        }
     }
 
-    public enum ChunkType {
-        BYTE,
-
-        MONO_CHANNEL,
-
-        MULTI_CHANNELS
+    /**
+     * @return the samples in the chunk
+     */
+    public double[][] getSamples(){
+        return m_samples;
     }
 
 }

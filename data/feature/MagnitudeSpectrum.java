@@ -44,61 +44,33 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 8, 2016 (budiyanto): created
+ *   Mar 28, 2016 (budiyanto): created
  */
-package org.knime.base.node.audio3.data;
+package org.knime.base.node.audio3.data.feature;
 
-import javax.sound.sampled.AudioFormat;
+import jAudioFeatureExtractor.jAudioTools.FFT;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class SampleChunk {
-
-    /** The samples in the chunk */
-//    private byte[] m_samples = new byte[1];
-
-//    private T m_samples;
-
-
-    /** The audio format of the chunk */
-    private final AudioFormat m_audioFormat;
+public class MagnitudeSpectrum extends FeatureExtractor{
 
     /**
-     * A new sample chunk should only be created using {@link SampleChunkFactory}
+     *
      */
-    SampleChunk(final AudioFormat audioFormat){
-//        setSamples(samples);
-        m_audioFormat = audioFormat;
+    protected MagnitudeSpectrum() {
+        super(FeatureType.MAGNITUDE_SPECTRUM);
     }
-
-//    private void setSamples(final T samples){
-//        synchronized (m_samples) {
-//            m_samples = samples;
-//        }
-//    }
-//
-//    /**
-//     * @return the samples in the chunk
-//     */
-//    public T getSamples(){
-//        return m_samples;
-//    }
 
     /**
-     * @return the audio format of the chunk
+     * {@inheritDoc}
      */
-    public AudioFormat getAudioFormat() {
-        return m_audioFormat;
-    }
-
-    public enum ChunkType {
-        BYTE,
-
-        MONO_CHANNEL,
-
-        MULTI_CHANNELS
+    @Override
+    public double[] extractFeature(final double[] samples, final double sampleRate,
+            final double[][] additionalFeatureValues) throws Exception{
+        FFT fft = new FFT(samples, null, false, true);
+        return fft.getMagnitudeSpectrum();
     }
 
 }

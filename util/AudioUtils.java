@@ -48,6 +48,7 @@
  */
 package org.knime.base.node.audio3.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import javax.sound.sampled.AudioFormat;
@@ -343,4 +344,44 @@ public class AudioUtils {
        return DSPMethods.getSamplesMixedDownIntoOneChannel(samples);
    }
 
+   /**
+    * Converts samples to time in seconds
+    * @param totalSamples
+    * @param sampleRate
+    * @return the time in seconds converted from samples
+    */
+   public static float convertSamplesToTime(final int totalSamples, final float sampleRate){
+       if(totalSamples < 0){
+           return 0;
+       }
+       return totalSamples / sampleRate;
+   }
+
+   /**
+    * @param audioInputStream
+    * @return bytes representation of the audio input stream
+    * @throws IOException
+    */
+   public static byte[] getBytesFromAudioInputStream(
+           final AudioInputStream audioInputStream) throws IOException{
+        // Calculate the buffer size to use
+        float buffer_duration_in_seconds = 0.25F;
+        int buffer_size = AudioMethods.getNumberBytesNeeded(
+            buffer_duration_in_seconds, audioInputStream.getFormat());
+        byte rw_buffer[] = new byte[buffer_size + 2];
+
+        // Read the bytes into the rw_buffer and then into the ByteArrayOutputStream
+        ByteArrayOutputStream byte_array_output_stream = new ByteArrayOutputStream();
+        int position = audioInputStream.read(rw_buffer, 0, rw_buffer.length);
+        while (position > 0) {
+            byte_array_output_stream.write(rw_buffer, 0, position);
+            position = audioInputStream.read(rw_buffer, 0, rw_buffer.length);
+        }
+        byte[] results = byte_array_output_stream.toByteArray();
+
+        byte_array_output_stream.close();
+
+        // Return the results
+        return results;
+   }
 }

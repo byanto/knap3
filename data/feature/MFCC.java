@@ -44,61 +44,42 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 8, 2016 (budiyanto): created
+ *   Mar 28, 2016 (budiyanto): created
  */
-package org.knime.base.node.audio3.data;
+package org.knime.base.node.audio3.data.feature;
 
-import javax.sound.sampled.AudioFormat;
+import org.oc.ocvolume.dsp.featureExtraction;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class SampleChunk {
+public class MFCC extends FeatureExtractor{
 
-    /** The samples in the chunk */
-//    private byte[] m_samples = new byte[1];
-
-//    private T m_samples;
-
-
-    /** The audio format of the chunk */
-    private final AudioFormat m_audioFormat;
+    private static final String PARAMETER_NAME = FeatureType.MFCC.getParameters()[0];
+    private static final int DEFAULT_PARAMETER_VALUE = 13;
 
     /**
-     * A new sample chunk should only be created using {@link SampleChunkFactory}
+     *
      */
-    SampleChunk(final AudioFormat audioFormat){
-//        setSamples(samples);
-        m_audioFormat = audioFormat;
+    protected MFCC() {
+        super(FeatureType.MFCC, new int[]{DEFAULT_PARAMETER_VALUE});
     }
-
-//    private void setSamples(final T samples){
-//        synchronized (m_samples) {
-//            m_samples = samples;
-//        }
-//    }
-//
-//    /**
-//     * @return the samples in the chunk
-//     */
-//    public T getSamples(){
-//        return m_samples;
-//    }
 
     /**
-     * @return the audio format of the chunk
+     * {@inheritDoc}
      */
-    public AudioFormat getAudioFormat() {
-        return m_audioFormat;
-    }
-
-    public enum ChunkType {
-        BYTE,
-
-        MONO_CHANNEL,
-
-        MULTI_CHANNELS
+    @Override
+    public double[] extractFeature(final double[] samples, final double sampleRate,
+            final double[][] additionalFeatureValues) throws Exception{
+        final featureExtraction extractor = new featureExtraction();
+        extractor.numCepstra = getParameterValue(PARAMETER_NAME);
+        final int[] cbin = extractor.fftBinIndices(sampleRate,
+            additionalFeatureValues[0].length);
+        final double[] fbank = extractor.melFilter(additionalFeatureValues[0], cbin);
+        final double[] f = extractor.nonLinearTransformation(fbank);
+        final double[] cepc = extractor.cepCoefficients(f);
+        return cepc;
     }
 
 }
