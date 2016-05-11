@@ -57,7 +57,9 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
 import org.knime.base.node.audio3.data.Audio;
+import org.knime.base.node.audio3.data.ByteSampleChunk;
 import org.knime.base.node.audio3.data.SampleChunk;
+import org.knime.base.node.audio3.data.SampleChunk.ChunkType;
 import org.knime.base.node.audio3.data.SampleChunkFactory;
 import org.knime.core.node.NodeLogger;
 
@@ -74,6 +76,7 @@ public class AudioPlayer implements Runnable{
     private boolean m_started = false;
     private Mode m_mode = Mode.PLAY;
     private List<AudioEventListener> m_listeners = new ArrayList<AudioEventListener>();
+    private SampleChunkFactory m_chunkFactory;
 
     /**
      * Current state of the audio player
@@ -89,8 +92,14 @@ public class AudioPlayer implements Runnable{
         STOP
     }
 
+    /**
+     *
+     * @param audio
+     */
     public AudioPlayer(final Audio audio){
         m_audio = audio;
+        m_chunkFactory = new SampleChunkFactory(
+            audio, ChunkType.BYTE, true, 0.25f, 0f);
     }
 
     private void setMode(final Mode mode){
@@ -107,20 +116,18 @@ public class AudioPlayer implements Runnable{
             m_started = true;
             try {
                 openSourceDataLine();
-                final SampleChunkFactory factory = new SampleChunkFactory(
-                    m_audio, true, 1024);
                 SampleChunk chunk = null;
                 boolean ended = false;
                 while(!ended && m_mode != Mode.STOP){
                     if(m_mode == Mode.PLAY){
-                        chunk = factory.nextSampleChunk();
+                        chunk = m_chunkFactory.nextSampleChunk();
                         if(chunk == null){
                             ended = true;
                             continue;
                         }
-                        fireBeforePlay(chunk);
-                        playAudioChunk(chunk);
-                        fireAfterPlay(chunk);
+                        fireBeforePlay((ByteSampleChunk) chunk);
+                        playAudioChunk((ByteSampleChunk) chunk);
+                        fireAfterPlay((ByteSampleChunk) chunk);
                     } else{
                         Thread.sleep(500);
                     }
@@ -154,7 +161,7 @@ public class AudioPlayer implements Runnable{
         }
     }
 
-    private void playAudioChunk(final SampleChunk chunk){
+    private void playAudioChunk(final ByteSampleChunk chunk){
         final byte[] samples = chunk.getSamples();
         m_line.write(samples, 0, samples.length);
     }
@@ -223,7 +230,7 @@ public class AudioPlayer implements Runnable{
      * Fires an event indicating that the given audio chunk will be played
      * @param chunk the chunk that will be played
      */
-    private void fireBeforePlay(final SampleChunk chunk){
+    private void fireBeforePlay(final ByteSampleChunk chunk){
         for(final AudioEventListener listener : m_listeners){
             listener.beforePlay(chunk);
         }
@@ -233,7 +240,7 @@ public class AudioPlayer implements Runnable{
      * Fires an event indicating that the given audio chunk has been played
      * @param chunk the chunk that has been played
      */
-    private void fireAfterPlay(final SampleChunk chunk){
+    private void fireAfterPlay(final ByteSampleChunk chunk){
         for(final AudioEventListener listener : m_listeners){
             listener.afterPlay(chunk);
         }

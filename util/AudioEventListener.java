@@ -48,7 +48,7 @@
  */
 package org.knime.base.node.audio3.util;
 
-import org.knime.base.node.audio3.data.SampleChunk;
+import org.knime.base.node.audio3.data.ByteSampleChunk;
 
 /**
  * Interface for audio events that may occur while playing an audio
@@ -60,13 +60,13 @@ public interface AudioEventListener {
      * Called before playing an audio chunk
      * @param chunk the audio chunk that will be played
      */
-    public void beforePlay(final SampleChunk chunk);
+    public void beforePlay(final ByteSampleChunk chunk);
 
     /**
      * Called after playing an audio chunk
      * @param chunk the audio chunk that has been played
      */
-    public void afterPlay(final SampleChunk chunk);
+    public void afterPlay(final ByteSampleChunk chunk);
 
     /**
      * Called after the whole audio has been played

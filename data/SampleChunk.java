@@ -56,12 +56,6 @@ import javax.sound.sampled.AudioFormat;
  */
 public class SampleChunk {
 
-    /** The samples in the chunk */
-//    private byte[] m_samples = new byte[1];
-
-//    private T m_samples;
-
-
     /** The audio format of the chunk */
     private final AudioFormat m_audioFormat;
 
@@ -69,22 +63,8 @@ public class SampleChunk {
      * A new sample chunk should only be created using {@link SampleChunkFactory}
      */
     SampleChunk(final AudioFormat audioFormat){
-//        setSamples(samples);
         m_audioFormat = audioFormat;
     }
-
-//    private void setSamples(final T samples){
-//        synchronized (m_samples) {
-//            m_samples = samples;
-//        }
-//    }
-//
-//    /**
-//     * @return the samples in the chunk
-//     */
-//    public T getSamples(){
-//        return m_samples;
-//    }
 
     /**
      * @return the audio format of the chunk
@@ -93,11 +73,17 @@ public class SampleChunk {
         return m_audioFormat;
     }
 
+    /**
+     * Enumerator for defining Chunk Type
+     */
     public enum ChunkType {
+        /** Sample chunk representing byte samples */
         BYTE,
 
+        /** Sample chunk representing a mono channel audio samples in double */
         MONO_CHANNEL,
 
+        /** Sample chunk representing a multi channel audio samples in double */
         MULTI_CHANNELS
     }
 

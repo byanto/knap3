@@ -56,7 +56,7 @@ import javax.sound.sampled.AudioFormat;
  */
 public class MultiChannelSampleChunk extends SampleChunk{
 
-    private double[][] m_samples;
+    private double[][] m_samples = new double[0][0];
 
     MultiChannelSampleChunk(final AudioFormat audioFormat, final double[][] samples){
         super(audioFormat);

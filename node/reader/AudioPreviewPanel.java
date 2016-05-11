@@ -63,8 +63,10 @@ import java.awt.event.ActionListener;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -72,7 +74,7 @@ import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 
 import org.knime.base.node.audio3.data.AudioBuilder;
-import org.knime.base.node.audio3.data.SampleChunk;
+import org.knime.base.node.audio3.data.ByteSampleChunk;
 import org.knime.base.node.audio3.util.AudioErrorUtils;
 import org.knime.base.node.audio3.util.AudioEventListener;
 import org.knime.base.node.audio3.util.AudioPlayer;
@@ -166,7 +168,7 @@ public class AudioPreviewPanel extends JPanel{
             m_player = new AudioPlayer(AudioBuilder.createAudio(m_selectedFile));
             m_player.addAudioEventListener(new AudioWaveDrawer());
             m_player.start();
-        } catch(Exception ex){
+        } catch(UnsupportedAudioFileException | IOException ex){
             AudioErrorUtils.showError(this, ex.getMessage(),
                 "Cannot open file: " + m_selectedFile.getName());
         }
@@ -191,19 +193,20 @@ public class AudioPreviewPanel extends JPanel{
          * {@inheritDoc}
          */
         @Override
-        public void beforePlay(final SampleChunk chunk) {
+        public void beforePlay(final ByteSampleChunk chunk) {
             final int nrOfChannels = chunk.getAudioFormat().getChannels();
-            float[] samples = new float[1024 * nrOfChannels];
-            long[] transfer = new long[samples.length];
-            final int bread = chunk.getSamples().length;
             final AudioFormat audioFormat = chunk.getAudioFormat();
             final int normalizedBytes = AudioUtils.normalizeBytesFromBits(
                 audioFormat.getSampleSizeInBits());
-            samples = AudioUtils.unpack(chunk.getSamples(), transfer, samples,
-                bread, audioFormat);
-            samples = AudioUtils.window(samples, bread / normalizedBytes, audioFormat);
+            final int samplesLength = chunk.getSamples().length;
+            float[] samples = new float[samplesLength / normalizedBytes];
+            long[] transfer = new long[samplesLength / normalizedBytes];
 
-            m_displayPanel.makePath(nrOfChannels, samples, bread / normalizedBytes);
+            samples = AudioUtils.unpack(chunk.getSamples(), transfer, samples,
+                samplesLength, audioFormat);
+            samples = AudioUtils.window(samples, samplesLength / normalizedBytes, audioFormat);
+
+            m_displayPanel.makePath(nrOfChannels, samples, samplesLength / normalizedBytes);
             m_displayPanel.repaint();
         }
 
@@ -211,7 +214,7 @@ public class AudioPreviewPanel extends JPanel{
          * {@inheritDoc}
          */
         @Override
-        public void afterPlay(final SampleChunk chunk) {
+        public void afterPlay(final ByteSampleChunk chunk) {
 
         }
 
