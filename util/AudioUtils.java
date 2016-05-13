@@ -50,6 +50,8 @@ package org.knime.base.node.audio3.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -57,6 +59,7 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import org.knime.base.node.audio3.data.Audio;
+import org.knime.base.node.audio3.data.AudioSamples;
 import org.knime.core.node.NodeLogger;
 
 import jAudioFeatureExtractor.jAudioTools.AudioMethods;
@@ -301,6 +304,27 @@ public class AudioUtils {
        return samples;
    }
 
+   public static AudioSamples getAudioSamples(final Audio audio) throws UnsupportedAudioFileException, IOException{
+       final AudioInputStream originalStream = AudioSystem.getAudioInputStream(
+           audio.getFile());
+       AudioInputStream convertedStream = AudioMethods.getConvertedAudioStream(originalStream);
+       final AudioFormat audioFormat = convertedStream.getFormat();
+       double[][] channelSamples = null;
+       try{
+           channelSamples = AudioMethods.extractSampleValues(convertedStream);
+       } catch(Exception ex){
+           LOGGER.error(ex.getMessage());
+       }
+
+       originalStream.close();
+       convertedStream.close();
+
+       if(channelSamples == null){
+           return null;
+       }
+       return new AudioSamples(channelSamples, audioFormat);
+   }
+
    /**
     * @param audio
     * @return the 2D array containing the audio samples. The first indices
@@ -356,6 +380,41 @@ public class AudioUtils {
        }
        return totalSamples / sampleRate;
    }
+
+
+
+   /**
+    *
+    * @param samples
+    * @param windowSize
+    * @return
+    */
+   public static List<double[]> cutSamplesIntoWindows(final double[] samples,
+           final int windowSize, final int windowOverlapInPercent) {
+
+       final int windowOverlapOffset = (int)((windowOverlapInPercent / 100f)
+               * windowSize);
+       final List<double[]> result = new ArrayList<double[]>();
+
+       int position =  0;
+       int restSamples = samples.length;
+       int toCopy = windowSize;
+       while(position < samples.length){
+           double[] window = new double[windowSize];
+           if(toCopy > restSamples){
+               toCopy = restSamples;
+           }
+
+           System.arraycopy(samples, position, window, 0, toCopy);
+           position = position + windowSize - windowOverlapOffset;
+           restSamples = samples.length - position;
+           result.add(window);
+       }
+
+       return result;
+    }
+
+
 
    /**
     * @param audioInputStream

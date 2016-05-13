@@ -48,6 +48,9 @@
  */
 package org.knime.base.node.audio3.data.feature;
 
+import org.knime.base.node.audio3.data.AudioSamples;
+
+import jAudioFeatureExtractor.GeneralTools.Statistics;
 import jAudioFeatureExtractor.jAudioTools.FFT;
 
 /**
@@ -67,10 +70,19 @@ public class MagnitudeSpectrum extends FeatureExtractor{
      * {@inheritDoc}
      */
     @Override
-    public double[] extractFeature(final double[] samples, final double sampleRate,
-            final double[][] additionalFeatureValues) throws Exception{
-        FFT fft = new FFT(samples, null, false, true);
+    public double[] extractFeature(final AudioSamples samples,
+            final double[][] additionalFeatureValues) throws Exception {
+        final FFT fft = new FFT(samples.getSamplesMixedDownIntoOneChannel(),
+            null, false, true);
         return fft.getMagnitudeSpectrum();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getDimension(final int windowSize) {
+        return Statistics.ensureIsPowerOfN(windowSize, 2) / 2;
     }
 
 }

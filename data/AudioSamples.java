@@ -44,52 +44,61 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 28, 2016 (budiyanto): created
+ *   May 14, 2016 (budiyanto): created
  */
-package org.knime.base.node.audio3.data.feature;
+package org.knime.base.node.audio3.data;
 
-import org.knime.base.node.audio3.data.AudioSamples;
-import org.oc.ocvolume.dsp.featureExtraction;
+import javax.sound.sampled.AudioFormat;
+
+import jAudioFeatureExtractor.jAudioTools.DSPMethods;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class MFCC extends FeatureExtractor{
+public class AudioSamples {
 
-    private static final String PARAMETER_NAME = FeatureType.MFCC.getParameters()[0];
-    private static final int DEFAULT_PARAMETER_VALUE = 13;
+    private final AudioFormat m_audioFormat;
+    private final double[][] m_samples;
 
     /**
      *
+     * @param samples
+     * @param audioFormat
      */
-    protected MFCC() {
-        super(FeatureType.MFCC, new int[]{DEFAULT_PARAMETER_VALUE});
+    public AudioSamples(final double[] samples, final AudioFormat audioFormat){
+        this(new double[][]{samples}, audioFormat);
     }
 
     /**
-     * {@inheritDoc}
+     *
+     * @param samples
+     * @param audioFormat
      */
-    @Override
-    public double[] extractFeature(final AudioSamples samples,
-            final double[][] additionalFeatureValues) throws Exception {
-        final featureExtraction extractor = new featureExtraction();
-        extractor.numCepstra = getParameterValue(PARAMETER_NAME);
-        final int[] cbin = extractor.fftBinIndices(
-            samples.getAudioFormat().getSampleRate(),
-            additionalFeatureValues[0].length);
-        final double[] fbank = extractor.melFilter(additionalFeatureValues[0], cbin);
-        final double[] f = extractor.nonLinearTransformation(fbank);
-        final double[] cepc = extractor.cepCoefficients(f);
-        return cepc;
+    public AudioSamples(final double[][] samples, final AudioFormat audioFormat){
+        m_audioFormat = audioFormat;
+        m_samples = samples;
     }
 
     /**
-     * {@inheritDoc}
+     * @return the audioFormat
      */
-    @Override
-    public int getDimension(final int windowSize) {
-        return getParameterValue(PARAMETER_NAME);
+    public AudioFormat getAudioFormat() {
+        return m_audioFormat;
+    }
+
+    /**
+     * @return the samples
+     */
+    public double[][] getSamples() {
+        return m_samples;
+    }
+
+    /**
+     * @return the mixed down samples
+     */
+    public double[] getSamplesMixedDownIntoOneChannel(){
+        return DSPMethods.getSamplesMixedDownIntoOneChannel(m_samples);
     }
 
 }

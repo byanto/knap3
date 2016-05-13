@@ -75,117 +75,85 @@ public class SampleChunkFactory {
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(SampleChunkFactory.class);
 
-    private InputStream m_inStream;
-
-    private AudioInputStream m_audioInStream;
-
     private final Audio m_audio;
-
-    //    private final boolean m_inSamples;
-    private final float m_chunkSize;
-
-    private int m_bytesToRead = 0;
-
     private final SampleChunk.ChunkType m_chunkType;
 
-    private final int m_chunkOverlapOffset;
+    private InputStream m_inStream;
+    private AudioInputStream m_audioInStream;
+    private int m_chunkSizeInBytes;
+    private int m_chunkSizeInSamples;
 
-    private final boolean m_keepOriginalFormat;
+
+//    private int m_bytesToRead = 0;
+
+    private int m_chunkOverlapOffsetInSamples;
+
+
 
     private byte[] m_samples;
 
     private int m_pointer;
 
-    //    /**
-    //     * @param audio
-    //     * @param keepOriginalFormat
-    //     * @param inSamples
-    //     * @param chunkSize
-    //     */
-    //    public SampleChunkFactory(final Audio audio,
-    //            final boolean inSamples, final int chunkSize){
-    //        m_audio = audio;
-    ////        m_inSamples = inSamples;
-    //        m_chunkSize = chunkSize;
-    //        m_chunkType = null;
-    //        m_chunkOverlap = 0;
-    //        m_keepOriginalFormat = false;
-    //    }
 
-    /**
-     *
-     * @param audio
-     * @param chunkType
-     * @param keepOriginalFormat
-     * @param chunkSize
-     * @param chunkOverlap
-     */
-    public SampleChunkFactory(final Audio audio, final SampleChunk.ChunkType chunkType,
-        final boolean keepOriginalFormat, final float chunkSize, final float chunkOverlap) {
+    public SampleChunkFactory(final Audio audio, final int chunkSizeInSamples) throws UnsupportedAudioFileException, IOException {
+        this(audio, ChunkType.BYTE, 0);
+        m_chunkSizeInSamples = chunkSizeInSamples;
+        m_chunkSizeInBytes = m_chunkSizeInSamples *
+                audio.getAudioFileFormat().getFormat().getFrameSize();
+        m_chunkOverlapOffsetInSamples = 0;
+    }
+
+    public SampleChunkFactory(final Audio audio, final float chunkSizeInSeconds) throws UnsupportedAudioFileException, IOException {
+        this(audio, ChunkType.BYTE, 0);
+        final AudioFormat audioFormat = audio.getAudioFileFormat().getFormat();
+        m_chunkSizeInSamples = (int)(chunkSizeInSeconds * audioFormat.getFrameRate());
+        m_chunkSizeInBytes = m_chunkSizeInSamples * audioFormat.getFrameSize();
+        m_chunkOverlapOffsetInSamples = 0;
+    }
+
+    public SampleChunkFactory(final Audio audio, final int chunkSizeInSamples,
+            final int chunkOverlapInPercent, final boolean mixedDownToMonoChannel) throws UnsupportedAudioFileException, IOException{
+        this(audio, mixedDownToMonoChannel ? ChunkType.MONO_CHANNEL : ChunkType.MULTI_CHANNELS,
+            chunkOverlapInPercent);
+        m_chunkSizeInSamples = chunkSizeInSamples;
+        m_chunkSizeInBytes = m_chunkSizeInSamples *
+                audio.getAudioFileFormat().getFormat().getFrameSize();
+        m_chunkOverlapOffsetInSamples = (int)((chunkOverlapInPercent / 100f) * m_chunkSizeInSamples);
+    }
+
+    public SampleChunkFactory(final Audio audio, final float chunkSizeInSeconds,
+            final int chunkOverlapInPercent, final boolean mixedDownToMonoChannel) throws UnsupportedAudioFileException, IOException{
+        this(audio, mixedDownToMonoChannel ? ChunkType.MONO_CHANNEL : ChunkType.MULTI_CHANNELS,
+            chunkOverlapInPercent);
+        final AudioFormat audioFormat = audio.getAudioFileFormat().getFormat();
+        m_chunkSizeInSamples = (int)(chunkSizeInSeconds * audioFormat.getFrameRate());
+        m_chunkSizeInBytes = m_chunkSizeInSamples * audioFormat.getFrameSize();
+        m_chunkOverlapOffsetInSamples = (int)((chunkOverlapInPercent / 100f) * m_chunkSizeInSamples);
+    }
+
+    private SampleChunkFactory(final Audio audio, final SampleChunk.ChunkType chunkType,
+            final int chunkOverlapInPercent) throws UnsupportedAudioFileException, IOException{
         m_audio = audio;
         m_chunkType = chunkType;
-        m_chunkSize = chunkSize;
-        m_keepOriginalFormat = keepOriginalFormat;
-        m_chunkOverlapOffset = (int)(chunkOverlap * chunkSize);
-        if(m_chunkOverlapOffset >= chunkSize){
-            throw new IllegalArgumentException(
-                "Chunk overlap offset cannot be greater than chunk size");
+        if(chunkOverlapInPercent < 0 || chunkOverlapInPercent > 99){
+            throw new IllegalArgumentException("Chunk can only be overlapped within (0 - 99)%");
         }
+
+        m_inStream = new BufferedInputStream(new FileInputStream(m_audio.getFile()));
+        if(m_chunkType == ChunkType.BYTE){
+            m_audioInStream = AudioSystem.getAudioInputStream(m_inStream);
+        }else{
+            final AudioInputStream inStream = AudioSystem.getAudioInputStream(m_inStream);
+            m_audioInStream = AudioUtils.convertUnsupportedFormat(inStream);
+            m_samples = AudioUtils.getBytesFromAudioInputStream(m_audioInStream);
+        }
+
     }
 
-    private int calculateBytesToRead(final float chunkSize, final ChunkType chunkType) {
-        final AudioFormat audioFormat = m_audioInStream.getFormat();
-        int bytesToRead = 0;
-        if (chunkType == ChunkType.BYTE) {
-            bytesToRead = (int)(chunkSize * audioFormat.getFrameSize() * audioFormat.getFrameRate());
-        } else if (chunkType == ChunkType.MONO_CHANNEL || chunkType == ChunkType.MULTI_CHANNELS) {
-            final int normalizedBytes = AudioUtils.normalizeBytesFromBits(audioFormat.getSampleSizeInBits());
-            bytesToRead = ((int)chunkSize) * audioFormat.getChannels() * normalizedBytes;
-        }
-        return bytesToRead;
-    }
 
-    private void openStream() throws UnsupportedAudioFileException, IOException {
-        if (m_audioInStream == null && m_inStream == null) {
-            m_inStream = new BufferedInputStream(new FileInputStream(m_audio.getFile()));
-            if (m_chunkType == ChunkType.BYTE && m_keepOriginalFormat) {
-                m_audioInStream = AudioSystem.getAudioInputStream(m_inStream);
-            } else {
-                final AudioInputStream inStream = AudioSystem.getAudioInputStream(m_inStream);
-                m_audioInStream = AudioUtils.convertUnsupportedFormat(inStream);
-                m_samples = AudioUtils.getBytesFromAudioInputStream(m_audioInStream);
-
-                // TEST
-//                LOGGER.debug("Create dummy samples");
-//                LOGGER.debug("--------------------");
-//                m_samples = new byte[10000];
-//                new Random().nextBytes(m_samples);
-//                LOGGER.debug("m_samples length: " + m_samples.length);
-//                for (int i = 0; i < 20; i++) {
-//                    LOGGER.debug("m_samples[" + i + "] = " + m_samples[i]);
-//                }
-
-            }
-            m_pointer = 0;
-            m_bytesToRead = calculateBytesToRead(m_chunkSize, m_chunkType);
-        }
-    }
-
-    private void closeStream() throws IOException {
-        if (m_audioInStream != null) {
-            m_audioInStream.close();
-            m_audioInStream = null;
-        }
-        if (m_inStream != null) {
-            m_inStream.close();
-            m_inStream = null;
-        }
-        m_pointer = 0;
-        m_samples = null;
-    }
 
     public SampleChunk nextSampleChunk() throws UnsupportedAudioFileException, IOException {
-        openStream();
+//        openStream();
         SampleChunk chunk = null;
         if (m_chunkType == ChunkType.BYTE) {
             chunk = nextByteSampleChunk();
@@ -195,33 +163,28 @@ public class SampleChunkFactory {
             chunk = nextMultiChannelsSampleChunk();
         }
 
-        if (chunk == null) {
-            closeStream();
-        }
+//        if (chunk == null) {
+//            closeStream();
+//        }
 
         return chunk;
     }
 
-    //    private SampleChunk nextByteSampleChunk() {
-    //        if(m_pointer >= m_samples.length){
-    //            return null;
-    //        }
-    //
-    ////        final AudioFormat audioFormat = m_stream.getFormat();
-    ////        final int normalizedBytes = AudioUtils.normalizeBytesFromBits(
-    ////            audioFormat.getSampleSizeInBits());
-    ////        int size = m_chunkSize * audioFormat.getChannels() * normalizedBytes;
-    //        int bytesToRead = calculateBytesToRead(m_chunkSize, m_chunkType);
-    //        final int rest = m_samples.length - m_pointer;
-    //        if(bytesToRead > rest){
-    //            bytesToRead = rest;
-    //        }
-    //        final byte[] buf = new byte[bytesToRead];
-    //        System.arraycopy(m_samples, m_pointer, buf, 0, bytesToRead);
-    //        m_pointer += bytesToRead;
-    //
-    //        return new ByteSampleChunk(m_audioInStream.getFormat(), buf);
-    //    }
+    private SampleChunk nextByteSampleChunk() throws IOException {
+        final byte[] buf = new byte[m_chunkSizeInBytes + 2];
+        SampleChunk chunk = null;
+        final int totalRead = m_audioInStream.read(buf);
+        if (totalRead > 0) {
+            if (buf.length == totalRead) {
+                chunk = new ByteSampleChunk(m_audioInStream.getFormat(), buf);
+            } else {
+                final byte[] copy = new byte[totalRead];
+                System.arraycopy(buf, 0, copy, 0, totalRead);
+                chunk = new ByteSampleChunk(m_audioInStream.getFormat(), copy);
+            }
+        }
+        return chunk;
+    }
 
     private SampleChunk nextMultiChannelsSampleChunk() {
         final double[][] samples = extractSamplesPerChunk();
@@ -260,7 +223,7 @@ public class SampleChunkFactory {
         final int bytesPerSample = bitsPerSample / 8;
         final int nrOfChannels = audioFormat.getChannels();
 
-        final int totalBytesOverlapOffset = m_chunkOverlapOffset * bytesPerSample * nrOfChannels;
+        final int totalBytesOverlapOffset = m_chunkOverlapOffsetInSamples * bytesPerSample * nrOfChannels;
 
         LOGGER.debug("totalBytesOverlapOffset: " + totalBytesOverlapOffset);
         LOGGER.debug("bitsPerSample: " + bitsPerSample);
@@ -273,32 +236,32 @@ public class SampleChunkFactory {
             m_pointer = 0;
         }
         LOGGER.debug("m_pointer: " + m_pointer);
-
-        final byte[] buf = new byte[m_bytesToRead];
+        int chunkSizeInBytes = m_chunkSizeInBytes;
+        final byte[] buf = new byte[chunkSizeInBytes];
         final int rest = m_samples.length - m_pointer;
-        if (m_bytesToRead > rest) {
-            m_bytesToRead = rest;
+        if (chunkSizeInBytes > rest) {
+            chunkSizeInBytes = rest;
         }
 
         LOGGER.debug("buf.length : " + buf.length);
         LOGGER.debug("rest: " + rest);
-        LOGGER.debug("m_bytesToRead: " + m_bytesToRead);
+        LOGGER.debug("chunkSizeInBytes: " + chunkSizeInBytes);
 
-        System.arraycopy(m_samples, m_pointer, buf, 0, m_bytesToRead);
-        m_pointer += m_bytesToRead;
+        System.arraycopy(m_samples, m_pointer, buf, 0, chunkSizeInBytes);
+        m_pointer += chunkSizeInBytes;
         final double maxSampleValue = AudioMethods.findMaximumSampleValue(bitsPerSample) + 2.0;
         LOGGER.debug("maxSampleValue: " + maxSampleValue);
-        final double[][] samples = new double[nrOfChannels][(int)m_chunkSize];
+        final double[][] samples = new double[nrOfChannels][m_chunkSizeInSamples];
         ByteBuffer byteBuf = ByteBuffer.wrap(buf);
         if (bitsPerSample == 8) {
-            for (int sample = 0; sample < m_chunkSize; sample++) {
+            for (int sample = 0; sample < m_chunkSizeInSamples; sample++) {
                 for (int channel = 0; channel < nrOfChannels; channel++) {
                     samples[channel][sample] = byteBuf.get() / maxSampleValue;
                 }
             }
         } else if (bitsPerSample == 16) {
             ShortBuffer shortBuf = byteBuf.asShortBuffer();
-            for (int sample = 0; sample < m_chunkSize; sample++) {
+            for (int sample = 0; sample < m_chunkSizeInSamples; sample++) {
                 for (int channel = 0; channel < nrOfChannels; channel++) {
                     samples[channel][sample] = shortBuf.get() / maxSampleValue;
                 }
@@ -306,8 +269,83 @@ public class SampleChunkFactory {
         }
 
         return samples;
-
     }
+
+    public void closeStream() throws IOException {
+        if (m_audioInStream != null) {
+            m_audioInStream.close();
+            m_audioInStream = null;
+        }
+        if (m_inStream != null) {
+            m_inStream.close();
+            m_inStream = null;
+        }
+        m_pointer = 0;
+        m_samples = null;
+    }
+
+    public void reset(){
+        m_pointer = 0;
+    }
+
+//  private int calculateBytesToRead(final int chunkSize, final ChunkType chunkType) {
+//  final AudioFormat audioFormat = m_audioInStream.getFormat();
+//  int bytesToRead = 0;
+//  if (chunkType == ChunkType.BYTE) {
+//      bytesToRead = (int)(chunkSize * audioFormat.getFrameSize() * audioFormat.getFrameRate());
+//  } else if (chunkType == ChunkType.MONO_CHANNEL || chunkType == ChunkType.MULTI_CHANNELS) {
+//      final int normalizedBytes = AudioUtils.normalizeBytesFromBits(audioFormat.getSampleSizeInBits());
+//      bytesToRead = (chunkSize) * audioFormat.getChannels() * normalizedBytes;
+//  }
+//  return bytesToRead;
+//}
+
+//private void openStream() throws UnsupportedAudioFileException, IOException {
+//  if (m_audioInStream == null && m_inStream == null) {
+//      m_inStream = new BufferedInputStream(new FileInputStream(m_audio.getFile()));
+//      if (m_chunkType == ChunkType.BYTE && m_keepOriginalFormat) {
+//          m_audioInStream = AudioSystem.getAudioInputStream(m_inStream);
+//      } else {
+//          final AudioInputStream inStream = AudioSystem.getAudioInputStream(m_inStream);
+//          m_audioInStream = AudioUtils.convertUnsupportedFormat(inStream);
+//          m_samples = AudioUtils.getBytesFromAudioInputStream(m_audioInStream);
+//
+//          // TEST
+////          LOGGER.debug("Create dummy samples");
+////          LOGGER.debug("--------------------");
+////          m_samples = new byte[10000];
+////          new Random().nextBytes(m_samples);
+////          LOGGER.debug("m_samples length: " + m_samples.length);
+////          for (int i = 0; i < 20; i++) {
+////              LOGGER.debug("m_samples[" + i + "] = " + m_samples[i]);
+////          }
+//
+//      }
+//      m_pointer = 0;
+//      m_bytesToRead = calculateBytesToRead(m_chunkSize, m_chunkType);
+//  }
+//}
+
+    //    private SampleChunk nextByteSampleChunk() {
+    //        if(m_pointer >= m_samples.length){
+    //            return null;
+    //        }
+    //
+    ////        final AudioFormat audioFormat = m_stream.getFormat();
+    ////        final int normalizedBytes = AudioUtils.normalizeBytesFromBits(
+    ////            audioFormat.getSampleSizeInBits());
+    ////        int size = m_chunkSize * audioFormat.getChannels() * normalizedBytes;
+    //        int bytesToRead = calculateBytesToRead(m_chunkSize, m_chunkType);
+    //        final int rest = m_samples.length - m_pointer;
+    //        if(bytesToRead > rest){
+    //            bytesToRead = rest;
+    //        }
+    //        final byte[] buf = new byte[bytesToRead];
+    //        System.arraycopy(m_samples, m_pointer, buf, 0, bytesToRead);
+    //        m_pointer += bytesToRead;
+    //
+    //        return new ByteSampleChunk(m_audioInStream.getFormat(), buf);
+    //    }
 
     //    private SampleChunk nextMonoChannelSampleChunk() throws IOException{
     //        MultiChannelSampleChunk multiChannelChunk =
@@ -322,22 +360,6 @@ public class SampleChunkFactory {
     //
     //        return new MonoChannelSampleChunk(m_stream.getFormat(), mixedDownSamples);
     //    }
-
-    private SampleChunk nextByteSampleChunk() throws IOException {
-        final byte[] buf = new byte[m_bytesToRead + 2];
-        SampleChunk chunk = null;
-        final int totalRead = m_audioInStream.read(buf);
-        if (totalRead > 0) {
-            if (buf.length == totalRead) {
-                chunk = new ByteSampleChunk(m_audioInStream.getFormat(), buf);
-            } else {
-                final byte[] copy = new byte[totalRead];
-                System.arraycopy(buf, 0, copy, 0, totalRead);
-                chunk = new ByteSampleChunk(m_audioInStream.getFormat(), copy);
-            }
-        }
-        return chunk;
-    }
 
     //    private SampleChunk nextMultiChannelsSampleChunk() throws IOException {
     //        final AudioFormat audioFormat = m_audioInStream.getFormat();

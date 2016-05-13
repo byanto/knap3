@@ -2,12 +2,20 @@ package org.knime.base.node.audio3.node.featureextractor;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.knime.base.node.audio3.data.cell.FeatureExtractorCellFactory;
 import org.knime.base.node.audio3.data.component.AudioColumnSelection;
+import org.knime.base.node.audio3.data.feature.FeatureExtractor;
 import org.knime.base.node.audio3.data.feature.FeatureType;
+import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.container.ColumnRearranger;
+import org.knime.core.data.def.DoubleCell;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -19,6 +27,7 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.util.UniqueNameGenerator;
 
 /**
  * This is the model implementation of FeatureExtractor.
@@ -29,6 +38,9 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 public class FeatureExtractorNodeModel extends NodeModel {
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(FeatureExtractorNodeModel.class);
+
+    static final int DEF_WINDOW_SIZE = 512;
+    static final int DEF_WINDOW_OVERLAP = 0;
 
     static final String MEAN = "Mean";
     static final String STD_DEVIATION = "Standard Deviation";
@@ -187,11 +199,13 @@ public class FeatureExtractorNodeModel extends NodeModel {
     }
 
     static SettingsModelIntegerBounded createWindowSizeSettingsModel(){
-        return new SettingsModelIntegerBounded("windowSize", 512, 4, Integer.MAX_VALUE);
+        return new SettingsModelIntegerBounded("windowSize", DEF_WINDOW_SIZE,
+            4, Integer.MAX_VALUE);
     }
 
     static SettingsModelIntegerBounded createWindowOverlapSettingsModel(){
-        return new SettingsModelIntegerBounded("windowOverlap", 0, 0, 99);
+        return new SettingsModelIntegerBounded("windowOverlap",
+            DEF_WINDOW_OVERLAP, 0, 99);
     }
 
     static SettingsModelString createAggregatorSettingsModel(){
@@ -200,9 +214,76 @@ public class FeatureExtractorNodeModel extends NodeModel {
 
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec){
         final ColumnRearranger rearranger = new ColumnRearranger(inSpec);
+        final int colIdx = m_audioColumnSelectionSettingsModel.getSelectedColumnIndex();
+
+        // Create new DataColumnSpec for the extracted values
+        final List<DataColumnSpec> colSpecsList = new ArrayList<DataColumnSpec>();
+        final Set<FeatureType> selectedFeatures = m_settings.getSelectedFeatures();
+        final FeatureExtractor[] featureExtractors = FeatureExtractor
+                .getFeatureExtractors(selectedFeatures.toArray(
+                    new FeatureType[selectedFeatures.size()]));
+        final Set<String> colNames = new HashSet<String>(
+                Arrays.asList(inSpec.getColumnNames()));
+        for(FeatureExtractor extractor : featureExtractors){
+            final int dimension = extractor.getDimension(
+                m_windowSizeSettingsModel.getIntValue());
+            if(dimension > 1){
+                colNames.add(extractor.getType().getName());
+            }
+
+            for(int dim = 0; dim < dimension; dim++){
+                final UniqueNameGenerator generator = new UniqueNameGenerator(colNames);
+                final DataColumnSpec colSpec = generator.newColumn(
+                    extractor.getType().getName(), DoubleCell.TYPE);
+                colSpecsList.add(colSpec);
+                colNames.add(colSpec.getName());
+            }
+            final FeatureType type = extractor.getType();
+            if(type.hasParameters()){
+                for(final String parameter : type.getParameters()){
+                    extractor.setParameterValue(parameter,
+                        m_settings.getParameterValue(type, parameter));
+                }
+            }
+        }
+
+        final DataColumnSpec[] newColSpecs = colSpecsList.toArray(
+            new DataColumnSpec[colSpecsList.size()]);
+
+        final FeatureExtractorCellFactory cellFactory =
+                new FeatureExtractorCellFactory(colIdx, newColSpecs,
+                    featureExtractors, m_windowSizeSettingsModel.getIntValue(),
+                    m_windowOverlapSettingsModel.getIntValue(),
+                    m_aggregatorSettingsModel.getStringValue());
+
+        rearranger.append(cellFactory);
 
         return rearranger;
     }
+
+
+
+//    /**
+//     * @param origSpec the original {@link DataTableSpec}
+//     * @param extractors the extractors to use
+//     * @return the {@link DataColumnSpec} for the given
+//     * {@link AudioFeatureCellExtractor} in the same order as given
+//     */
+//    private static DataColumnSpec[] createColumnSpecs(
+//            final DataTableSpec origSpec,
+//            final AudioFeatureCellExtractor[] extractors) {
+//        if (extractors == null || extractors.length < 1) {
+//            return new DataColumnSpec[0];
+//        }
+//        final DataColumnSpec[] cols = new DataColumnSpec[extractors.length];
+//        for (int i = 0, length = extractors.length; i < length; i++) {
+//             final String name = DataTableSpec.getUniqueColumnName(origSpec,
+//                     extractors[i].getType().getName());
+//             final DataType type = extractors[i].getDataType();
+//             cols[i] = new DataColumnSpecCreator(name, type).createSpec();
+//        }
+//        return cols;
+//    }
 
 }
 

@@ -51,6 +51,8 @@ package org.knime.base.node.audio3.data.feature;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.knime.base.node.audio3.data.AudioSamples;
+
 /**
  *
  * @author Budi Yanto, KNIME.com
@@ -58,14 +60,14 @@ import java.util.Map;
 public abstract class FeatureExtractor {
 
     private final FeatureType m_type;
-    private final Map<String, Integer> m_parameters;
+    private final Map<String, Integer> m_parameters = new LinkedHashMap<String, Integer>();
 
     /**
      *
      * @param type
      */
     protected FeatureExtractor(final FeatureType type) {
-        this(type, null);
+        this(type, new int[0]);
     }
 
     /**
@@ -79,27 +81,16 @@ public abstract class FeatureExtractor {
         }
 
         final String[] parameters = type.getParameters();
-        if(parameterValues == null && parameters != null){
-            throw new IllegalArgumentException("Parameters must have default values");
-        }
 
-        if(parameterValues != null && parameters != null &&
-                (parameterValues.length != parameters.length)){
+        if(parameterValues.length != parameters.length){
             throw new IllegalArgumentException("Parameters and their default "
                 + "values must have the same length.");
         }
 
-        if(parameters == null || parameterValues == null){
-            m_parameters = null;
-        }else{
-            m_parameters = new LinkedHashMap<String, Integer>();
-            for(int i = 0; i < parameters.length; i++){
-                m_parameters.put(parameters[i], parameterValues[i]);
-            }
-        }
-
         m_type = type;
-
+        for(int i = 0; i < parameters.length; i++){
+            m_parameters.put(parameters[i], parameterValues[i]);
+        }
     }
 
     /**
@@ -134,15 +125,20 @@ public abstract class FeatureExtractor {
     }
 
     /**
-     * Extract the feature of the given samples
+     * Extract the feature of the given sample chunk
      * @param samples the samples of the audio whose feature should be extracted
-     * @param sampleRate the sample rate of the audio
      * @param additionalFeatureValues the values of the dependencies if needed for the extraction
-     * @return the feature of the given samples
+     * @return the extracted feature of the given sample chunk
      * @throws Exception
      */
-    public abstract double[] extractFeature(final double[] samples, final double sampleRate,
+    public abstract double[] extractFeature(final AudioSamples samples,
         final double[][] additionalFeatureValues) throws Exception;
+
+    /**
+     * @param windowSize the windows size of the sample chunk
+     * @return the dimension of the extracted feature values
+     */
+    public abstract int getDimension(final int windowSize);
 
     /**
      *
@@ -174,5 +170,31 @@ public abstract class FeatureExtractor {
             extractors[i] = getFeatureExtractor(types[i]);
         }
         return extractors;
+    }
+
+    public static Aggregator getAggregator(final String aggregator){
+        if(aggregator.equals(Aggregator.MEAN.getName())){
+            return Aggregator.MEAN;
+        }else if(aggregator.equals(Aggregator.STD_DEVIATION.getName())){
+            return Aggregator.STD_DEVIATION;
+        }else{
+            return null;
+        }
+    }
+
+    public enum Aggregator{
+        MEAN("Mean"),
+
+        STD_DEVIATION("Standard Deviation");
+
+        private final String m_name;
+        private Aggregator(final String name){
+            m_name = name;
+        }
+
+        public String getName(){
+            return m_name;
+        }
+
     }
 }

@@ -37,5 +37,15 @@ public class AudioReaderNodeDialog extends DefaultNodeSettingsPane {
             AudioReaderNodeModel.createFileListModel(), FILE_FILTER, CFG_DIR_HISTORY);
         addDialogComponent(m_fileChooser);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void onClose() {
+        super.onClose();
+        m_fileChooser.onClose();
+    }
+
 }
 

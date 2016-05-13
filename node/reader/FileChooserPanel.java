@@ -927,4 +927,8 @@ public class FileChooserPanel extends JPanel {
 
 		return (fileChooser != null) ? fileChooser : new MacHackedFileChooserPanel();
 	}
+
+	void onClose(){
+	    m_audioPreviewPanel.onStop();
+	}
 }

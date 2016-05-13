@@ -44,52 +44,64 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 28, 2016 (budiyanto): created
+ *   May 13, 2016 (budiyanto): created
  */
-package org.knime.base.node.audio3.data.feature;
-
-import org.knime.base.node.audio3.data.AudioSamples;
-import org.oc.ocvolume.dsp.featureExtraction;
+package org.knime.base.node.audio3.util;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class MFCC extends FeatureExtractor{
-
-    private static final String PARAMETER_NAME = FeatureType.MFCC.getParameters()[0];
-    private static final int DEFAULT_PARAMETER_VALUE = 13;
+public class MathUtils {
 
     /**
-     *
+     * @param values a 2-Dimensional array whose mean should be calculated
+     * @return the mean of the given values
      */
-    protected MFCC() {
-        super(FeatureType.MFCC, new int[]{DEFAULT_PARAMETER_VALUE});
+    public static double[] mean(final double[][] values){
+        if(values == null){
+            throw new IllegalArgumentException("Values cannot be null");
+        }
+
+        if(values.length == 1){
+            return values[0];
+        }
+
+        // find the max number of dimensions
+        int max = -1;
+        for (int i = 0; i < values.length; ++i) {
+            if ((values[i] != null) && (values[i].length > max)) {
+                max = values[i].length;
+            }
+        }
+
+        double[] result;
+        if (max <= 0) {
+            result = new double[]{0.0};
+        } else {
+            // now calculate means over all the dimensions
+            result = new double[max];
+            for (int i = 0; i < max; ++i) {
+                int count = 0;
+                double sum = 0.0;
+                for (int j = 0; j < values.length; ++j) {
+                    if ((values[j] != null) && (values[j].length > i)) {
+                        sum += values[j][i];
+                        count++;
+                    }
+                }
+                if (count == 0) {
+                    result[i] = 0.0;
+                } else {
+                    result[i] = sum / (count);
+                }
+            }
+        }
+        return result;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public double[] extractFeature(final AudioSamples samples,
-            final double[][] additionalFeatureValues) throws Exception {
-        final featureExtraction extractor = new featureExtraction();
-        extractor.numCepstra = getParameterValue(PARAMETER_NAME);
-        final int[] cbin = extractor.fftBinIndices(
-            samples.getAudioFormat().getSampleRate(),
-            additionalFeatureValues[0].length);
-        final double[] fbank = extractor.melFilter(additionalFeatureValues[0], cbin);
-        final double[] f = extractor.nonLinearTransformation(fbank);
-        final double[] cepc = extractor.cepCoefficients(f);
-        return cepc;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int getDimension(final int windowSize) {
-        return getParameterValue(PARAMETER_NAME);
+    public static double[] standardDeviation(final double[][] values){
+        return null;
     }
 
 }

@@ -74,17 +74,19 @@ import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 
 import org.knime.base.node.audio3.data.AudioBuilder;
-import org.knime.base.node.audio3.data.ByteSampleChunk;
 import org.knime.base.node.audio3.util.AudioErrorUtils;
 import org.knime.base.node.audio3.util.AudioEventListener;
 import org.knime.base.node.audio3.util.AudioPlayer;
 import org.knime.base.node.audio3.util.AudioUtils;
+import org.knime.core.node.NodeLogger;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
 public class AudioPreviewPanel extends JPanel{
+
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(AudioPreviewPanel.class);
 
     private static final long serialVersionUID = 1L;
 
@@ -99,9 +101,9 @@ public class AudioPreviewPanel extends JPanel{
     private final JButton m_buttonPause = new JButton("Pause");
     private final JButton m_buttonStop = new JButton("Stop");
 
-    private File m_selectedFile;
+    private File m_selectedFile = null;
 
-    private AudioPlayer m_player;
+    private AudioPlayer m_player = null;
 
     /**
      *
@@ -193,20 +195,19 @@ public class AudioPreviewPanel extends JPanel{
          * {@inheritDoc}
          */
         @Override
-        public void beforePlay(final ByteSampleChunk chunk) {
-            final int nrOfChannels = chunk.getAudioFormat().getChannels();
-            final AudioFormat audioFormat = chunk.getAudioFormat();
+        public void beforePlay(final byte[] samples, final AudioFormat audioFormat) {
+            final int nrOfChannels = audioFormat.getChannels();
             final int normalizedBytes = AudioUtils.normalizeBytesFromBits(
                 audioFormat.getSampleSizeInBits());
-            final int samplesLength = chunk.getSamples().length;
-            float[] samples = new float[samplesLength / normalizedBytes];
+            final int samplesLength = samples.length;
+            float[] newSamples = new float[samplesLength / normalizedBytes];
             long[] transfer = new long[samplesLength / normalizedBytes];
 
-            samples = AudioUtils.unpack(chunk.getSamples(), transfer, samples,
+            newSamples = AudioUtils.unpack(samples, transfer, newSamples,
                 samplesLength, audioFormat);
-            samples = AudioUtils.window(samples, samplesLength / normalizedBytes, audioFormat);
+            newSamples = AudioUtils.window(newSamples, samplesLength / normalizedBytes, audioFormat);
 
-            m_displayPanel.makePath(nrOfChannels, samples, samplesLength / normalizedBytes);
+            m_displayPanel.makePath(nrOfChannels, newSamples, samplesLength / normalizedBytes);
             m_displayPanel.repaint();
         }
 
@@ -214,7 +215,7 @@ public class AudioPreviewPanel extends JPanel{
          * {@inheritDoc}
          */
         @Override
-        public void afterPlay(final ByteSampleChunk chunk) {
+        public void afterPlay(final byte[] samples, final AudioFormat audioFormat) {
 
         }
 

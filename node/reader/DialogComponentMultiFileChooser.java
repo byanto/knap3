@@ -250,4 +250,8 @@ public class DialogComponentMultiFileChooser extends DialogComponent {
         return path;
     }
 
+    void onClose(){
+        getFileChooserPanel().onClose();
+    }
+
 }
