@@ -31,6 +31,9 @@ public class AudioViewerNodeView extends NodeView<AudioViewerNodeModel> {
      */
     protected AudioViewerNodeView(final AudioViewerNodeModel nodeModel) {
         super(nodeModel);
+        if(nodeModel.getAudioList() == null){
+            return;
+        }
         setComponent(createMainPanel(nodeModel.getAudioList()));
     }
 

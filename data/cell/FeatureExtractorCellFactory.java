@@ -49,12 +49,19 @@
 package org.knime.base.node.audio3.data.cell;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
 import org.knime.base.node.audio3.data.Audio;
 import org.knime.base.node.audio3.data.AudioSamples;
 import org.knime.base.node.audio3.data.feature.FeatureExtractor;
+import org.knime.base.node.audio3.data.feature.FeatureType;
 import org.knime.base.node.audio3.util.AudioUtils;
 import org.knime.base.node.audio3.util.MathUtils;
 import org.knime.core.data.DataCell;
@@ -115,7 +122,7 @@ public class FeatureExtractorCellFactory extends AbstractCellFactory{
      */
     @Override
     public DataCell[] getCells(final DataRow row) {
-
+        final DataCell[] cells = new DataCell[getColumnSpecs().length];
         final DataCell cell = row.getCell(m_audioColIdx);
         if(!cell.getType().isCompatible(AudioValue.class)){
             throw new IllegalStateException("Invalid column type");
@@ -123,59 +130,156 @@ public class FeatureExtractorCellFactory extends AbstractCellFactory{
 
         final Audio audio = ((AudioCell) cell).getAudio();
 
-        int cellIdx = 0;
-        final DataCell[] cells = new DataCell[getColumnSpecs().length];
         try {
             final AudioSamples audioSamples = AudioUtils.getAudioSamples(audio);
             final double[] samples = audioSamples.getSamplesMixedDownIntoOneChannel();
             final int windowOverlapOffset = (int)((m_windowsOverlapInPercent / 100f)
                     * m_windowSizeInSamples);
 
-            for(FeatureExtractor extractor : m_extractors){
-                final List<double[]> featuresList = new ArrayList<double[]>();
-                int position =  0;
-                int restSamples = samples.length;
-                int toCopy = m_windowSizeInSamples;
-                while(position < samples.length){
-                    double[] window = new double[m_windowSizeInSamples];
-                    if(toCopy > restSamples){
-                        toCopy = restSamples;
-                    }
+            final List<Integer> chunkIndices = getChunkStartIndices(samples,
+                m_windowSizeInSamples, windowOverlapOffset);
 
-                    System.arraycopy(samples, position, window, 0, toCopy);
-                    position = position + m_windowSizeInSamples - windowOverlapOffset;
-                    restSamples = samples.length - position;
+            final Map<FeatureType, FeatureExtractor> orderedExtractors =
+                    reorderExtractors(m_extractors);
 
-                    // Extract features on the window
-                    final double[] features = extractor.extractFeature(
-                        new AudioSamples(window, audioSamples.getAudioFormat()), null);
-                    featuresList.add(features);
+            final Map<FeatureType, List<double[]>> featuresMap =
+                    new HashMap<FeatureType, List<double[]>>();
+            int toRead = m_windowSizeInSamples;
+            for(int i = 0; i < chunkIndices.size(); i++){
+                if(i == chunkIndices.size() - 1){
+                    /* Last index, only read the rest of the samples */
+                    toRead = samples.length - chunkIndices.get(i);
                 }
+                final double[] buf = new double[m_windowSizeInSamples];
+                System.arraycopy(samples, chunkIndices.get(i), buf, 0, toRead);
+                final AudioSamples chunk = new AudioSamples(buf, audioSamples.getAudioFormat());
+                for(FeatureExtractor extractor : orderedExtractors.values()){
+                    final FeatureType type = extractor.getType();
+                    final FeatureType[] dependencies = type.getDependencies();
+                    double[][] additionalValues = new double[dependencies.length][];
+                    for(int j = 0; j < dependencies.length; j++){
+                        additionalValues[j] = featuresMap.get(dependencies[j]).get(i);
+                    }
+                    if(!type.hasDependencies()){
+                        additionalValues = null;
+                    }
+                    final double[] features = extractor.extractFeature(chunk, additionalValues);
+                    List<double[]> list = featuresMap.get(type);
+                    if(list == null){
+                        list = new ArrayList<double[]>();
+                        list.add(features);
+                        featuresMap.put(type, list);
+                    }else{
+                        list.add(features);
+                    }
+                }
+            }
 
+            /* Aggregate all of the features */
+            final Map<FeatureType, double[]> extractionResults =
+                    new HashMap<FeatureType, double[]>();
+            for(Entry<FeatureType, List<double[]>> entry : featuresMap.entrySet()){
+                final String text = "Aggregate feature of '" + entry.getKey().getName() + "' with ";
                 double[] aggregation = new double[0];
-                final double[][] values = featuresList.toArray(
-                    new double[featuresList.size()][]);
+                final double[][] values = entry.getValue().toArray(
+                    new double[entry.getValue().size()][]);
                 switch (m_aggregator) {
                     case MEAN:
+                        LOGGER.debug(text + "'" +
+                                FeatureExtractor.Aggregator.MEAN.getName() + "'");
                         aggregation = MathUtils.mean(values);
                         break;
                     case STD_DEVIATION:
+                        LOGGER.debug(text + "'" +
+                                FeatureExtractor.Aggregator.STD_DEVIATION.getName()
+                                + "'");
                         aggregation = MathUtils.standardDeviation(values);
                         break;
                     default:
                         break;
                 }
-                for(int i = 0; i < aggregation.length; i++){
-                    cells[cellIdx++] = new DoubleCell(aggregation[i]);
-                }
-
+                extractionResults.put(entry.getKey(), aggregation);
             }
 
+            /* Put extracted features into DoubleCell */
+            int cellIdx = 0;
+            for(FeatureExtractor extractor : m_extractors){
+                final double[] features = extractionResults.get(extractor.getType());
+                LOGGER.debug("Put features of '" + extractor.getType().getName()
+                    + "' into cells with dimension of " + features.length);
+                for(final double d : features){
+                    cells[cellIdx++] = new DoubleCell(d);
+                }
+            }
         } catch (Exception ex) {
             LOGGER.error(ex);
         }
 
         return cells;
+    }
+
+//    private List<AudioSamples> cutSamplesIntoChunks(final AudioSamples audioSamples,
+//            final int chunkSize, final int chunkOverlap){
+//        final List<AudioSamples> result = new ArrayList<AudioSamples>();
+//        final double[] samples = audioSamples.getSamplesMixedDownIntoOneChannel();
+//        int position =  0;
+//        int restSamples = samples.length;
+//        int toCopy = chunkSize;
+//        while(position < samples.length){
+//            double[] window = new double[chunkSize];
+//            if(toCopy > restSamples){
+//                toCopy = restSamples;
+//            }
+//
+//            System.arraycopy(samples, position, window, 0, toCopy);
+//            position = position + chunkSize - chunkOverlap;
+//            restSamples = samples.length - position;
+//            result.add(new AudioSamples(window, audioSamples.getAudioFormat()));
+//        }
+//
+//        return result;
+//    }
+
+    private List<Integer> getChunkStartIndices(final double[] samples,
+            final int chunkSize, final int chunkOverlapOffset){
+        final List<Integer> result = new ArrayList<Integer>();
+        int position = 0;
+        while (position < samples.length) {
+            position -= chunkOverlapOffset;
+            if(position < 0){
+                position = 0;
+            }
+            result.add(position);
+            position += chunkSize;
+        }
+        return result;
+    }
+
+    private Map<FeatureType, FeatureExtractor> reorderExtractors(final FeatureExtractor[] extractors){
+        List<FeatureExtractor> extractorList = new ArrayList<FeatureExtractor>(
+                Arrays.asList(extractors));
+        Map<FeatureType, FeatureExtractor> result =
+                new LinkedHashMap<FeatureType, FeatureExtractor>();
+
+        Iterator<FeatureExtractor> it = extractorList.iterator();
+        while(it.hasNext()){
+            FeatureExtractor extractor = it.next();
+            if(!extractor.getType().hasDependencies()){
+                result.put(extractor.getType(), extractor);
+                it.remove();
+            }
+        }
+
+        /* Iterate over the list to handle extractor with dependencies, if any */
+        for(FeatureExtractor ext : extractorList){
+            for(FeatureType type : ext.getType().getDependencies()){
+                if(!result.containsKey(type)){
+                    result.put(type, FeatureExtractor.getFeatureExtractor(type));
+                }
+            }
+            result.put(ext.getType(), ext);
+        }
+        return result;
     }
 
 

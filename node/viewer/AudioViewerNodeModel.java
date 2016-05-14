@@ -27,6 +27,9 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 public class AudioViewerNodeModel extends NodeModel {
 
     private static final String CFG_AUDIO_COLUMN = "AudioColumn";
+//    private static final String INTERNAL_MODEL = "AudioViewerModel";
+//    private static final String SETTINGS_FILE = "AudioViewerNodeModelSettings.dat";
+
     private SettingsModelString m_audioColumn = createAudioColumnSettingsModel();
     private List<Audio> m_audioList;
 
@@ -123,7 +126,8 @@ public class AudioViewerNodeModel extends NodeModel {
     protected void saveInternals(final File internDir,
             final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
-        // TODO: generated method stub
+//        ModelContent modelContent = new ModelContent(INTERNAL_MODEL);
+        // TODO
     }
 
     static SettingsModelString createAudioColumnSettingsModel(){

@@ -225,6 +225,14 @@ public class FeatureExtractorNodeModel extends NodeModel {
         final Set<String> colNames = new HashSet<String>(
                 Arrays.asList(inSpec.getColumnNames()));
         for(FeatureExtractor extractor : featureExtractors){
+            final FeatureType type = extractor.getType();
+            if(type.hasParameters()){
+                for(final String parameter : type.getParameters()){
+                    extractor.setParameterValue(parameter,
+                        m_settings.getParameterValue(type, parameter));
+                }
+            }
+
             final int dimension = extractor.getDimension(
                 m_windowSizeSettingsModel.getIntValue());
             if(dimension > 1){
@@ -238,13 +246,7 @@ public class FeatureExtractorNodeModel extends NodeModel {
                 colSpecsList.add(colSpec);
                 colNames.add(colSpec.getName());
             }
-            final FeatureType type = extractor.getType();
-            if(type.hasParameters()){
-                for(final String parameter : type.getParameters()){
-                    extractor.setParameterValue(parameter,
-                        m_settings.getParameterValue(type, parameter));
-                }
-            }
+
         }
 
         final DataColumnSpec[] newColSpecs = colSpecsList.toArray(

@@ -182,6 +182,48 @@ public abstract class FeatureExtractor {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((m_parameters == null) ? 0 : m_parameters.hashCode());
+        result = prime * result + ((m_type == null) ? 0 : m_type.hashCode());
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        FeatureExtractor other = (FeatureExtractor)obj;
+        if (m_parameters == null) {
+            if (other.m_parameters != null) {
+                return false;
+            }
+        } else if (!m_parameters.equals(other.m_parameters)) {
+            return false;
+        }
+        if (m_type != other.m_type) {
+            return false;
+        }
+        return true;
+    }
+
+
+
     public enum Aggregator{
         MEAN("Mean"),
 
@@ -194,6 +236,14 @@ public abstract class FeatureExtractor {
 
         public String getName(){
             return m_name;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String toString() {
+            return getName();
         }
 
     }
