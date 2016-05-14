@@ -44,53 +44,27 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 6, 2016 (budiyanto): created
+ *   May 14, 2016 (budiyanto): created
  */
-package org.knime.base.node.audio3.data;
+package org.knime.base.node.audio3.data.recognizer;
 
-import java.io.File;
-import java.io.IOException;
-
-import javax.sound.sampled.UnsupportedAudioFileException;
+import org.knime.base.node.audio3.data.Audio;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class AudioBuilder {
+public interface Recognizer {
 
     /**
-     *
-     * @param filePath
-     * @return a new audio instance
-     * @throws UnsupportedAudioFileException
-     * @throws IOException
-     */
-    public static Audio createAudio(final String filePath)
-            throws UnsupportedAudioFileException, IOException{
-        return createAudio(new File(filePath));
-    }
-
-    /**
-     *
-     * @param file
-     * @return a new audio instance
-     * @throws UnsupportedAudioFileException
-     * @throws IOException
-     */
-    public static Audio createAudio(final File file)
-            throws UnsupportedAudioFileException, IOException{
-        return new Audio(file);
-    }
-
-    /**
-     *
      * @param audio
-     * @return a new audio instance
+     * @return the recognition result
      */
-    public static Audio createAudio(final Audio audio){
-        return new Audio(audio.getFile(), audio.getAudioFileFormat(),
-            audio.getRecognitionResults());
-    }
+    RecognitionResult recognize(final Audio audio);
+
+    /**
+     * @return the default name of the recognizer
+     */
+    String getName();
 
 }

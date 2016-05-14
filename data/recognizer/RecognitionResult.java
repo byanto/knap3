@@ -44,53 +44,99 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 6, 2016 (budiyanto): created
+ *   May 14, 2016 (budiyanto): created
  */
-package org.knime.base.node.audio3.data;
+package org.knime.base.node.audio3.data.recognizer;
 
-import java.io.File;
-import java.io.IOException;
-
-import javax.sound.sampled.UnsupportedAudioFileException;
+import org.knime.base.node.audio.data.recognizer.RecognizerInfo;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class AudioBuilder {
+public class RecognitionResult {
+
+    /** Default confidence score if it is not available */
+    public static final double UNKNOWN_CONFIDENCE_SCORE = -1;
+
+    private final RecognizerInfo m_recognizerInfo;
+
+    private String m_transcript;
+    private double m_confidence;
 
     /**
-     *
-     * @param filePath
-     * @return a new audio instance
-     * @throws UnsupportedAudioFileException
-     * @throws IOException
-     */
-    public static Audio createAudio(final String filePath)
-            throws UnsupportedAudioFileException, IOException{
-        return createAudio(new File(filePath));
-    }
+    *
+    * @param recognizerName
+    * @param transcript
+    */
+   public RecognitionResult(final String recognizerName, final String transcript){
+       this(recognizerName, transcript, UNKNOWN_CONFIDENCE_SCORE);
+   }
 
-    /**
-     *
-     * @param file
-     * @return a new audio instance
-     * @throws UnsupportedAudioFileException
-     * @throws IOException
-     */
-    public static Audio createAudio(final File file)
-            throws UnsupportedAudioFileException, IOException{
-        return new Audio(file);
-    }
+   /**
+    *
+    * @param recognizerName
+    * @param transcript
+    * @param confidence
+    */
+   public RecognitionResult(final String recognizerName,
+           final String transcript, final double confidence){
+       m_transcript = transcript;
+       m_confidence = confidence;
+       m_recognizerInfo = new RecognizerInfo(recognizerName);
+   }
 
-    /**
-     *
-     * @param audio
-     * @return a new audio instance
-     */
-    public static Audio createAudio(final Audio audio){
-        return new Audio(audio.getFile(), audio.getAudioFileFormat(),
-            audio.getRecognitionResults());
-    }
+   /**
+    * @return the transcript
+    */
+   public String getTranscript() {
+       return m_transcript;
+   }
 
+   /**
+    * @param transcript the transcript to set
+    */
+   public void setTranscript(final String transcript) {
+       m_transcript = transcript;
+   }
+
+   /**
+    * @return the confidence score
+    */
+   public double getConfidence(){
+       return m_confidence;
+   }
+
+   /**
+    * @param confidence
+    */
+   public void setConfidence(final double confidence){
+       m_confidence = confidence;
+   }
+
+   /**
+    * @param key
+    * @return the recognizer info
+    */
+   public Object getRecognizerInfo(final String key){
+       return m_recognizerInfo.getInfo(key);
+   }
+
+   /**
+    * @param key
+    * @param value
+    */
+   public void addRecognizerInfo(final String key, final Object value){
+       m_recognizerInfo.addInfo(key, value);
+   }
+
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public String toString() {
+       final StringBuilder builder = new StringBuilder();
+       builder.append(getTranscript());
+       return builder.toString();
+   }
 }

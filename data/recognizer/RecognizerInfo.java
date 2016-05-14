@@ -44,53 +44,36 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 6, 2016 (budiyanto): created
+ *   May 14, 2016 (budiyanto): created
  */
-package org.knime.base.node.audio3.data;
+package org.knime.base.node.audio3.data.recognizer;
 
-import java.io.File;
-import java.io.IOException;
-
-import javax.sound.sampled.UnsupportedAudioFileException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class AudioBuilder {
+public class RecognizerInfo {
 
-    /**
-     *
-     * @param filePath
-     * @return a new audio instance
-     * @throws UnsupportedAudioFileException
-     * @throws IOException
-     */
-    public static Audio createAudio(final String filePath)
-            throws UnsupportedAudioFileException, IOException{
-        return createAudio(new File(filePath));
+    public static final String KEY_NAME = "Name";
+
+    private final Map<String, Object> m_info = new LinkedHashMap<String, Object>();
+
+    public RecognizerInfo(final String recognizerName){
+        m_info.put(KEY_NAME, recognizerName);
     }
 
-    /**
-     *
-     * @param file
-     * @return a new audio instance
-     * @throws UnsupportedAudioFileException
-     * @throws IOException
-     */
-    public static Audio createAudio(final File file)
-            throws UnsupportedAudioFileException, IOException{
-        return new Audio(file);
+    public void addInfo(final String key, final Object value){
+        if(key == null || value == null){
+            throw new IllegalArgumentException("Key or value cannot be null");
+        }
+        m_info.put(key, value);
     }
 
-    /**
-     *
-     * @param audio
-     * @return a new audio instance
-     */
-    public static Audio createAudio(final Audio audio){
-        return new Audio(audio.getFile(), audio.getAudioFileFormat(),
-            audio.getRecognitionResults());
+    public Object getInfo(final String key){
+        return m_info.get(key);
     }
 
 }

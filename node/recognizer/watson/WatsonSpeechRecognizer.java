@@ -44,53 +44,81 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 6, 2016 (budiyanto): created
+ *   May 14, 2016 (budiyanto): created
  */
-package org.knime.base.node.audio3.data;
+package org.knime.base.node.audio3.node.recognizer.watson;
 
-import java.io.File;
-import java.io.IOException;
+import org.apache.commons.lang.StringUtils;
+import org.knime.base.node.audio3.data.Audio;
+import org.knime.base.node.audio3.data.recognizer.RecognitionResult;
+import org.knime.base.node.audio3.data.recognizer.Recognizer;
 
-import javax.sound.sampled.UnsupportedAudioFileException;
+import com.ibm.watson.developer_cloud.speech_to_text.v1.SpeechToText;
+import com.ibm.watson.developer_cloud.speech_to_text.v1.model.SpeechAlternative;
+import com.ibm.watson.developer_cloud.speech_to_text.v1.model.SpeechResults;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class AudioBuilder {
+public class WatsonSpeechRecognizer implements Recognizer{
+
+    private String m_userName = "";
+    private String m_password = "";
 
     /**
-     *
-     * @param filePath
-     * @return a new audio instance
-     * @throws UnsupportedAudioFileException
-     * @throws IOException
+     * @return the userName
      */
-    public static Audio createAudio(final String filePath)
-            throws UnsupportedAudioFileException, IOException{
-        return createAudio(new File(filePath));
+    public String getUserName() {
+        return m_userName;
     }
 
     /**
-     *
-     * @param file
-     * @return a new audio instance
-     * @throws UnsupportedAudioFileException
-     * @throws IOException
+     * @param userName the userName to set
      */
-    public static Audio createAudio(final File file)
-            throws UnsupportedAudioFileException, IOException{
-        return new Audio(file);
+    public void setUserName(final String userName) {
+        m_userName = userName;
     }
 
     /**
-     *
-     * @param audio
-     * @return a new audio instance
+     * @return the password
      */
-    public static Audio createAudio(final Audio audio){
-        return new Audio(audio.getFile(), audio.getAudioFileFormat(),
-            audio.getRecognitionResults());
+    public String getPassword() {
+        return m_password;
+    }
+
+    /**
+     * @param password the password to set
+     */
+    public void setPassword(final String password) {
+        m_password = password;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public RecognitionResult recognize(final Audio audio) {
+        if(StringUtils.isBlank(m_userName) || StringUtils.isBlank(m_password)){
+            throw new IllegalArgumentException("Username and password cannot be empty.");
+        }
+        final SpeechToText service = new SpeechToText();
+        service.setUsernameAndPassword(m_userName, m_password);
+        final SpeechResults results = service.recognize(audio.getFile());
+
+        final SpeechAlternative alternative = results.getResults().get(0)
+                .getAlternatives().get(0);
+        final String transcript = alternative.getTranscript();
+        final double confidence = alternative.getConfidence();
+        return new RecognitionResult(getName(), transcript, confidence);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getName() {
+        return "IBM Watson Speech To Text";
     }
 
 }

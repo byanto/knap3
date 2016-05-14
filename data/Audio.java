@@ -50,12 +50,17 @@ package org.knime.base.node.audio3.data;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import org.knime.base.node.audio2.data.AudioBuilder;
+import org.knime.base.node.audio.data.recognizer.RecognizerInfo;
+import org.knime.base.node.audio3.data.recognizer.RecognitionResult;
+import org.knime.core.util.UniqueNameGenerator;
 
 /**
  *
@@ -65,6 +70,7 @@ public class Audio {
 
     private File m_file;
     private AudioFileFormat m_audioFileFormat;
+    private Map<String, RecognitionResult> m_recognitionResults;
 
     /**
      * Prevent to directly create a new audio instance.
@@ -84,6 +90,17 @@ public class Audio {
         }
         m_file = file;
         m_audioFileFormat = AudioSystem.getAudioFileFormat(m_file);
+        m_recognitionResults = new LinkedHashMap<String, RecognitionResult>();
+    }
+
+    Audio(final File file, final AudioFileFormat audioFileFormat,
+            final Map<String, RecognitionResult> recognitionResults){
+        m_file = file;
+        m_audioFileFormat = audioFileFormat;
+        m_recognitionResults = new LinkedHashMap<String, RecognitionResult>();
+        for(Entry<String, RecognitionResult> entry : recognitionResults.entrySet()){
+            m_recognitionResults.put(entry.getKey(), entry.getValue());
+        }
     }
 
     /**
@@ -105,6 +122,87 @@ public class Audio {
      */
     public AudioFileFormat getAudioFileFormat(){
         return m_audioFileFormat;
+    }
+
+    /**
+     * @return the recognizers
+     */
+    public Map<String, RecognitionResult> getRecognitionResults() {
+        return m_recognitionResults;
+    }
+
+    /**
+     * @param key the key of the recognition result
+     * @return the recognition result based on the given key
+     */
+    public RecognitionResult getRecognitionResult(final String key){
+        return m_recognitionResults.get(key);
+    }
+
+    /**
+     * Adds a recognition result to the list
+     * @param result
+     */
+    public void addRecognitionResult(final RecognitionResult result){
+        if(result == null){
+            throw new IllegalArgumentException("result cannot be null");
+        }
+
+        final String key = new UniqueNameGenerator(m_recognitionResults.keySet())
+                .newName(result.getRecognizerInfo(RecognizerInfo.KEY_NAME).toString());
+        m_recognitionResults.put(key, result);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((m_audioFileFormat == null) ? 0 : m_audioFileFormat.hashCode());
+        result = prime * result + ((m_file == null) ? 0 : m_file.hashCode());
+        result = prime * result + ((m_recognitionResults == null) ? 0 : m_recognitionResults.hashCode());
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Audio other = (Audio)obj;
+        if (m_audioFileFormat == null) {
+            if (other.m_audioFileFormat != null) {
+                return false;
+            }
+        } else if (!m_audioFileFormat.equals(other.m_audioFileFormat)) {
+            return false;
+        }
+        if (m_file == null) {
+            if (other.m_file != null) {
+                return false;
+            }
+        } else if (!m_file.equals(other.m_file)) {
+            return false;
+        }
+        if (m_recognitionResults == null) {
+            if (other.m_recognitionResults != null) {
+                return false;
+            }
+        } else if (!m_recognitionResults.equals(other.m_recognitionResults)) {
+            return false;
+        }
+        return true;
     }
 
 }
