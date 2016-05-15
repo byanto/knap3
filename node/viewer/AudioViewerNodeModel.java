@@ -1,10 +1,18 @@
 package org.knime.base.node.audio3.node.viewer;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
+import javax.sound.sampled.UnsupportedAudioFileException;
+
 import org.knime.base.node.audio3.data.Audio;
+import org.knime.base.node.audio3.data.AudioBuilder;
+import org.knime.base.node.audio3.data.io.BufferedDataInputStream;
+import org.knime.base.node.audio3.data.io.BufferedDataOutputStream;
 import org.knime.base.node.audio3.util.DataStructureUtils;
 import org.knime.base.node.audio3.util.KNAPConstants;
 import org.knime.core.data.DataTableSpec;
@@ -28,7 +36,7 @@ public class AudioViewerNodeModel extends NodeModel {
 
     private static final String CFG_AUDIO_COLUMN = "AudioColumn";
 //    private static final String INTERNAL_MODEL = "AudioViewerModel";
-//    private static final String SETTINGS_FILE = "AudioViewerNodeModelSettings.dat";
+    private static final String SETTINGS_FILE = "AudioViewerNodeModelSettings.dat";
 
     private SettingsModelString m_audioColumn = createAudioColumnSettingsModel();
     private List<Audio> m_audioList;
@@ -116,7 +124,25 @@ public class AudioViewerNodeModel extends NodeModel {
     protected void loadInternals(final File internDir,
             final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
-        // TODO: generated method stub
+        final File file = new File(internDir, SETTINGS_FILE);
+        final BufferedDataInputStream input = new BufferedDataInputStream(
+            new FileInputStream(file));
+        System.out.println(file.getAbsolutePath());
+        final int size = input.readInt();
+        m_audioList = new ArrayList<Audio>(size);
+        for(int i = 0; i < size; i++){
+            exec.checkCanceled();
+            try{
+                m_audioList.add(AudioBuilder.loadInternals(input));
+            } catch(UnsupportedAudioFileException ex) {
+                IOException ioe = new IOException("Could not load internals!");
+                ioe.initCause(ex);
+                input.close();
+                throw ioe;
+            }
+        }
+
+        input.close();
     }
 
     /**
@@ -126,8 +152,18 @@ public class AudioViewerNodeModel extends NodeModel {
     protected void saveInternals(final File internDir,
             final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
-//        ModelContent modelContent = new ModelContent(INTERNAL_MODEL);
-        // TODO
+
+        final File file = new File(internDir, SETTINGS_FILE);
+        final BufferedDataOutputStream output = new BufferedDataOutputStream(
+            new FileOutputStream(file));
+        final int size = m_audioList.size();
+        output.writeInt(size);
+        for(final Audio audio : m_audioList){
+            exec.checkCanceled();
+            AudioBuilder.saveInternals(audio, output);
+        }
+
+        output.close();
     }
 
     static SettingsModelString createAudioColumnSettingsModel(){

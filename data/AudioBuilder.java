@@ -53,6 +53,11 @@ import java.io.IOException;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import org.knime.base.node.audio3.data.io.BufferedDataInputStream;
+import org.knime.base.node.audio3.data.io.BufferedDataOutputStream;
+import org.knime.core.data.DataCellDataInput;
+import org.knime.core.data.DataCellDataOutput;
+
 /**
  *
  * @author Budi Yanto, KNIME.com
@@ -91,6 +96,52 @@ public class AudioBuilder {
     public static Audio createAudio(final Audio audio){
         return new Audio(audio.getFile(), audio.getAudioFileFormat(),
             audio.getRecognitionResults());
+    }
+
+    /**
+     *
+     * @param audio
+     * @param output
+     * @throws IOException
+     */
+    public static void serialize(final Audio audio,
+            final DataCellDataOutput output) throws IOException{
+        Audio.serialize(audio, output);
+    }
+
+    /**
+     *
+     * @param input
+     * @return an <code>Audio</code> instance
+     * @throws IOException
+     * @throws UnsupportedAudioFileException
+     */
+    public static Audio deserialize(final DataCellDataInput input)
+            throws IOException, UnsupportedAudioFileException{
+        return Audio.deserialize(input);
+    }
+
+    /**
+     *
+     * @param audio
+     * @param output
+     * @throws IOException
+     */
+    public static void saveInternals(final Audio audio,
+            final BufferedDataOutputStream output) throws IOException{
+        Audio.saveInternals(audio, output);
+    }
+
+    /**
+     *
+     * @param input
+     * @return an <code>Audio</code> instance
+     * @throws IOException
+     * @throws UnsupportedAudioFileException
+     */
+    public static Audio loadInternals(final BufferedDataInputStream input)
+            throws IOException, UnsupportedAudioFileException {
+        return Audio.loadInternals(input);
     }
 
 }

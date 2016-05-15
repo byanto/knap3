@@ -78,7 +78,7 @@ public class AudioCell extends DataCell implements AudioValue, StringValue{
          */
         @Override
         public void serialize(final AudioCell cell, final DataCellDataOutput output) throws IOException {
-            output.writeUTF(cell.getAudio().getFile().getAbsolutePath());
+            AudioBuilder.serialize(cell.getAudio(), output);
         }
 
         /**
@@ -86,14 +86,12 @@ public class AudioCell extends DataCell implements AudioValue, StringValue{
          */
         @Override
         public AudioCell deserialize(final DataCellDataInput input) throws IOException {
-            final String filePath = input.readUTF();
-            final Audio audio;
-            try{
-                audio = AudioBuilder.createAudio(filePath);
-            } catch(UnsupportedAudioFileException ex){
+            try {
+                final Audio audio = AudioBuilder.deserialize(input);
+                return new AudioCell(audio);
+            } catch (UnsupportedAudioFileException ex) {
                 throw new IOException(ex);
             }
-            return new AudioCell(audio);
         }
 
     }

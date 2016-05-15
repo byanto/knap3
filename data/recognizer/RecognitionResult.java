@@ -48,7 +48,12 @@
  */
 package org.knime.base.node.audio3.data.recognizer;
 
-import org.knime.base.node.audio.data.recognizer.RecognizerInfo;
+import java.io.IOException;
+
+import org.knime.base.node.audio3.data.io.BufferedDataInputStream;
+import org.knime.base.node.audio3.data.io.BufferedDataOutputStream;
+import org.knime.core.data.DataCellDataInput;
+import org.knime.core.data.DataCellDataOutput;
 
 /**
  *
@@ -59,8 +64,9 @@ public class RecognitionResult {
     /** Default confidence score if it is not available */
     public static final double UNKNOWN_CONFIDENCE_SCORE = -1;
 
-    private final RecognizerInfo m_recognizerInfo;
+//    private final RecognizerInfo m_recognizerInfo;
 
+    private String m_recognizerName;
     private String m_transcript;
     private double m_confidence;
 
@@ -81,9 +87,10 @@ public class RecognitionResult {
     */
    public RecognitionResult(final String recognizerName,
            final String transcript, final double confidence){
+       m_recognizerName = recognizerName;
        m_transcript = transcript;
        m_confidence = confidence;
-       m_recognizerInfo = new RecognizerInfo(recognizerName);
+//       m_recognizerInfo = new RecognizerInfo(recognizerName);
    }
 
    /**
@@ -115,19 +122,85 @@ public class RecognitionResult {
    }
 
    /**
-    * @param key
-    * @return the recognizer info
+    * @return the name of the recognizer
     */
-   public Object getRecognizerInfo(final String key){
-       return m_recognizerInfo.getInfo(key);
+   public String getRecognizerName(){
+       return m_recognizerName;
+   }
+
+//   /**
+//    * @param key
+//    * @return the recognizer info
+//    */
+//   public Object getRecognizerInfo(final String key){
+//       return m_recognizerInfo.getInfo(key);
+//   }
+//
+//   /**
+//    * @param key
+//    * @param value
+//    */
+//   public void addRecognizerInfo(final String key, final Object value){
+//       m_recognizerInfo.addInfo(key, value);
+//   }
+
+   /**
+    * @param output
+    * @param result
+    * @throws IOException
+    */
+   public static void serialize(final DataCellDataOutput output,
+           final RecognitionResult result) throws IOException {
+       output.writeUTF(result.getRecognizerName());
+       output.writeUTF(result.getTranscript());
+       output.writeDouble(result.getConfidence());
    }
 
    /**
-    * @param key
-    * @param value
+    * Deserialize from <code>DataCellDataInput</code>
+    * @param input
+    * @return an <code>RecognitionResult</code>
+    * @throws IOException
     */
-   public void addRecognizerInfo(final String key, final Object value){
-       m_recognizerInfo.addInfo(key, value);
+   public static RecognitionResult deserialize(final DataCellDataInput input) throws IOException {
+       final String recognizerName = input.readUTF();
+       final String transcript = input.readUTF();
+       final double confidence = input.readDouble();
+       return new RecognitionResult(recognizerName, transcript, confidence);
+   }
+
+   /**
+    *
+    * @param output
+    * @param result
+    * @throws IOException
+    */
+   public static void saveInternals(final BufferedDataOutputStream output,
+           final RecognitionResult result) throws IOException{
+       final String recognizerName = result.getRecognizerName();
+       output.writeInt(recognizerName.length());
+       output.writeChars(recognizerName);
+       final String transcript = result.getTranscript();
+       output.writeInt(transcript.length());
+       output.writeChars(transcript);
+       output.writeDouble(result.getConfidence());
+   }
+
+   /**
+    *
+    * @param input
+    * @return an <code>RecognitionResult</code> instance
+    * @throws IOException
+    */
+   public static RecognitionResult loadInternals(final BufferedDataInputStream input)
+           throws IOException {
+       final char[] recognizerName = new char[input.readInt()];
+       input.read(recognizerName);
+       final char[] transcript = new char[input.readInt()];
+       input.read(transcript);
+       final double confidence = input.readDouble();
+       return new RecognitionResult(new String(recognizerName),
+           new String(transcript), confidence);
    }
 
    /**

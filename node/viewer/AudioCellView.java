@@ -50,17 +50,25 @@ package org.knime.base.node.audio3.node.viewer;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.io.IOException;
+import java.util.Set;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.JEditorPane;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
 import org.jfree.chart.ChartFactory;
@@ -69,6 +77,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.knime.base.node.audio3.data.Audio;
+import org.knime.base.node.audio3.data.recognizer.RecognitionResult;
 import org.knime.base.node.audio3.util.AudioUtils;
 import org.knime.core.node.NodeLogger;
 
@@ -92,7 +101,10 @@ class AudioCellView extends JPanel{
     AudioCellView(final Audio audio){
         m_audio = audio;
         setLayout(new BorderLayout());
-        add(createViewerPanel(), BorderLayout.CENTER);
+        final JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.add("Viewer", createViewerPanel());
+        tabbedPane.add("Recognition", createRecognitionPanel());
+        add(tabbedPane, BorderLayout.CENTER);
     }
 
     private JSplitPane createViewerPanel(){
@@ -187,6 +199,75 @@ class AudioCellView extends JPanel{
         panel.add(new JScrollPane(table));
 
         return panel;
+    }
+
+    private JPanel createRecognitionPanel(){
+        final JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setPreferredSize(new Dimension(600, 400));
+
+        if(!m_audio.hasRecognitionResult()){
+            final JLabel label = new JLabel("No audio recognition is available yet.");
+            mainPanel.add(label, BorderLayout.CENTER);
+        }else{
+            final JPanel descriptionPanel = new JPanel(new GridLayout(1, 1));
+            final JEditorPane descriptionEditor = new JEditorPane("text/html", "No recognizer is selected.");
+            descriptionEditor.setEditable(false);
+            final JScrollPane descriptionScrollPane = new JScrollPane(descriptionEditor);
+            descriptionScrollPane.setBorder(BorderFactory.createTitledBorder("Information"));
+            descriptionScrollPane.setMinimumSize(new Dimension(400, 200));
+            descriptionPanel.add(descriptionScrollPane);
+
+            final JPanel recognizersPanel = new JPanel(new GridLayout(1, 1));
+            final Set<String> recognizerSet = m_audio.getRecognitionResults().keySet();
+//            final Set<String> recognizerSet = m_audio.getRecognizers().keySet();
+            final JList<String> recognizerList = new JList<String>(
+                    recognizerSet.toArray(new String[recognizerSet.size()]));
+            recognizerList.setSelectedIndex(0);
+            updateRecognitionDescriptionEditor(descriptionEditor,
+                recognizerList.getSelectedValue());
+            recognizerList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            recognizerList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+
+                @Override
+                public void valueChanged(final ListSelectionEvent e) {
+                    if(!e.getValueIsAdjusting()){
+                        updateRecognitionDescriptionEditor(descriptionEditor,
+                            recognizerList.getSelectedValue());
+                    }
+                }
+            });
+            final JScrollPane recognizerScrollPane = new JScrollPane(recognizerList);
+            recognizerScrollPane.setMinimumSize(new Dimension(250, 200));
+            recognizerScrollPane.setBorder(BorderFactory.createTitledBorder("Recognizers"));
+            recognizersPanel.add(recognizerScrollPane);
+
+            final JSplitPane splitPane = new JSplitPane(
+                JSplitPane.HORIZONTAL_SPLIT, recognizersPanel, descriptionPanel);
+
+            mainPanel.add(splitPane, BorderLayout.CENTER);
+
+        }
+
+        return mainPanel;
+    }
+
+    private void updateRecognitionDescriptionEditor(final JEditorPane editor,
+            final String recognizerKey){
+        final RecognitionResult result = m_audio.getRecognitionResult(recognizerKey);
+        final StringBuilder builder = new StringBuilder()
+        .append("<h2>").append(recognizerKey).append("</h2>")
+        .append("<h3>Recognizer Info</h3>")
+//        .append("Type: ").append(result.getRecognizerInfo(RecognizerInfo.KEY_NAME))
+        .append("Type: ").append(result.getRecognizerName())
+        .append("<h3>Recognition Result</h3>")
+        .append("Transcript: ").append(result.getTranscript()).append("<br/>")
+        .append("Confidence: ");
+        if(result.getConfidence() == RecognitionResult.UNKNOWN_CONFIDENCE_SCORE){
+            builder.append("Unknown");
+        }else{
+            builder.append(result.getConfidence());
+        }
+        editor.setText(builder.toString());
     }
 
 }

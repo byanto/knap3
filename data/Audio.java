@@ -58,8 +58,11 @@ import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import org.knime.base.node.audio.data.recognizer.RecognizerInfo;
+import org.knime.base.node.audio3.data.io.BufferedDataInputStream;
+import org.knime.base.node.audio3.data.io.BufferedDataOutputStream;
 import org.knime.base.node.audio3.data.recognizer.RecognitionResult;
+import org.knime.core.data.DataCellDataInput;
+import org.knime.core.data.DataCellDataOutput;
 import org.knime.core.util.UniqueNameGenerator;
 
 /**
@@ -148,9 +151,96 @@ public class Audio {
             throw new IllegalArgumentException("result cannot be null");
         }
 
+//        final String key = new UniqueNameGenerator(m_recognitionResults.keySet())
+//                .newName(result.getRecognizerInfo(RecognizerInfo.KEY_NAME).toString());
         final String key = new UniqueNameGenerator(m_recognitionResults.keySet())
-                .newName(result.getRecognizerInfo(RecognizerInfo.KEY_NAME).toString());
+                .newName(result.getRecognizerName());
         m_recognitionResults.put(key, result);
+    }
+
+    /**
+     * @return <code>true</code> if the audio has recognition result attached to it,
+     * otherwise <code>false</code>
+     */
+    public boolean hasRecognitionResult(){
+        return m_recognitionResults != null && !m_recognitionResults.isEmpty();
+    }
+
+    /**
+     * @param output
+     * @throws IOException
+     */
+    static void serialize( final Audio audio, final DataCellDataOutput output)
+            throws IOException{
+        output.writeUTF(audio.getFile().getAbsolutePath());
+        if(audio.hasRecognitionResult()){
+            output.writeBoolean(true);
+            output.writeInt(audio.getRecognitionResults().size());
+            for(Entry<String, RecognitionResult> entry : audio.getRecognitionResults().entrySet()){
+                output.writeUTF(entry.getKey());
+                RecognitionResult.serialize(output, entry.getValue());
+            }
+        }else{
+            output.writeBoolean(false);
+        }
+    }
+
+    /**
+     *
+     * @param input
+     * @return an audio instance
+     * @throws IOException
+     * @throws UnsupportedAudioFileException
+     */
+    static Audio deserialize(final DataCellDataInput input) throws
+            IOException, UnsupportedAudioFileException {
+        final Audio audio = new Audio(new File(input.readUTF()));
+        if(input.readBoolean()){
+            final int size = input.readInt();
+            for(int i = 0; i < size; i++){
+                final String key = input.readUTF();
+                final RecognitionResult result = RecognitionResult.deserialize(input);
+                audio.getRecognitionResults().put(key, result);
+            }
+        }
+
+        return audio;
+    }
+
+    static void saveInternals(final Audio audio,
+            final BufferedDataOutputStream output) throws IOException {
+
+        final String path = audio.getFile().getAbsolutePath();
+        output.writeInt(path.length());
+        output.writeChars(path);
+        if (audio.hasRecognitionResult()) {
+            output.writeBoolean(true);
+            output.writeInt(audio.getRecognitionResults().size());
+            for(Entry<String, RecognitionResult> entry : audio.getRecognitionResults().entrySet()){
+                output.writeInt(entry.getKey().length());
+                output.writeChars(entry.getKey());
+                RecognitionResult.saveInternals(output, entry.getValue());
+            }
+        } else {
+            output.writeBoolean(false);
+        }
+    }
+
+    static Audio loadInternals(final BufferedDataInputStream input)
+            throws IOException, UnsupportedAudioFileException{
+        final char[] path = new char[input.readInt()];
+        input.read(path);
+        final Audio audio = new Audio(new File(new String(path)));
+        if(input.readBoolean()){
+            final int size = input.readInt();
+            for(int i = 0; i < size; i++){
+                final char[] key = new char[input.readInt()];
+                input.read(key);
+                final RecognitionResult result = RecognitionResult.loadInternals(input);
+                audio.getRecognitionResults().put(new String(key), result);
+            }
+        }
+        return audio;
     }
 
     /**
