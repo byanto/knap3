@@ -6,11 +6,11 @@ import org.knime.core.node.NodeView;
 
 /**
  * <code>NodeFactory</code> for the "BingSpeechRecognizer" Node.
- * 
+ *
  *
  * @author Budi Yanto, KNIME.com
  */
-public class BingSpeechRecognizerNodeFactory 
+public class BingSpeechRecognizerNodeFactory
         extends NodeFactory<BingSpeechRecognizerNodeModel> {
 
     /**
@@ -26,7 +26,7 @@ public class BingSpeechRecognizerNodeFactory
      */
     @Override
     public int getNrNodeViews() {
-        return 1;
+        return 0;
     }
 
     /**

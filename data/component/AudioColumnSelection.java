@@ -136,7 +136,7 @@ public class AudioColumnSelection {
      * @param settings The settings to read.
      * @throws InvalidSettingsException If a property is not available.
      */
-    public void laodSettingsFrom(final NodeSettingsRO settings)
+    public void loadSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_audioColumnModel.loadSettingsFrom(settings);
     }

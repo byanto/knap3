@@ -6,11 +6,11 @@ import org.knime.core.node.NodeView;
 
 /**
  * <code>NodeFactory</code> for the "CMUSphinxRecognizer" Node.
- * 
+ *
  *
  * @author Budi Yanto, KNIME.com
  */
-public class CMUSphinxRecognizerNodeFactory 
+public class CMUSphinxRecognizerNodeFactory
         extends NodeFactory<CMUSphinxRecognizerNodeModel> {
 
     /**
@@ -26,7 +26,7 @@ public class CMUSphinxRecognizerNodeFactory
      */
     @Override
     public int getNrNodeViews() {
-        return 1;
+        return 0;
     }
 
     /**

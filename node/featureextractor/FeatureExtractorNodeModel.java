@@ -158,7 +158,7 @@ public class FeatureExtractorNodeModel extends NodeModel {
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        m_audioColumnSelectionSettingsModel.laodSettingsFrom(settings);
+        m_audioColumnSelectionSettingsModel.loadSettingsFrom(settings);
         m_windowSizeSettingsModel.loadSettingsFrom(settings);
         m_windowOverlapSettingsModel.loadSettingsFrom(settings);
         m_aggregatorSettingsModel.loadSettingsFrom(settings);

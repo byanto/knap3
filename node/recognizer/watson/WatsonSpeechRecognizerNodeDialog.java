@@ -1,8 +1,7 @@
 package org.knime.base.node.audio3.node.recognizer.watson;
 
-import org.knime.base.node.audio3.data.component.AudioColumnSelection;
+import org.knime.base.node.audio3.node.recognizer.RecognizerNodeDialog;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentPasswordField;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
 
@@ -17,18 +16,13 @@ import org.knime.core.node.defaultnodesettings.DialogComponentString;
  *
  * @author Budi Yanto, KNIME.com
  */
-public class WatsonSpeechRecognizerNodeDialog extends DefaultNodeSettingsPane {
+public class WatsonSpeechRecognizerNodeDialog extends RecognizerNodeDialog {
 
     /**
      * New pane for configuring the WatsonSpeechRecognizer node.
      */
     protected WatsonSpeechRecognizerNodeDialog() {
-        createNewGroup("Options");
-        addDialogComponent(AudioColumnSelection.createDialogComponent());
-        addDialogComponent(new DialogComponentBoolean(
-            WatsonSpeechRecognizerNodeModel.createAppendTranscriptionModel(),
-            "Append transcription"));
-        closeCurrentGroup();
+        super();
 
         // Create authentication group
         createNewGroup("Authentication");

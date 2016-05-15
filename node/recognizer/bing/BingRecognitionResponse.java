@@ -44,77 +44,86 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 14, 2016 (budiyanto): created
+ *   Apr 12, 2016 (budiyanto): created
  */
-package org.knime.base.node.audio3.data.cell;
+package org.knime.base.node.audio3.node.recognizer.bing;
 
-import org.knime.base.node.audio3.data.Audio;
-import org.knime.base.node.audio3.data.AudioBuilder;
-import org.knime.base.node.audio3.data.recognizer.RecognitionResult;
-import org.knime.base.node.audio3.data.recognizer.Recognizer;
-import org.knime.core.data.DataCell;
-import org.knime.core.data.DataColumnSpec;
-import org.knime.core.data.DataRow;
-import org.knime.core.data.DataType;
-import org.knime.core.data.container.AbstractCellFactory;
-import org.knime.core.data.def.StringCell;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class RecognizerCellFactory extends AbstractCellFactory{
+class BingRecognitionResponse {
 
-    private final int m_audioColIdx;
-    private final Recognizer m_recognizer;
+    private String m_version;
+    private List<Result> m_results;
+
+    BingRecognitionResponse() {}
 
     /**
-     *
-     * @param audioColIdx
-     * @param recognizer
-     * @param colSpecs
+     * @return the version
      */
-    public RecognizerCellFactory(final int audioColIdx,
-            final Recognizer recognizer, final DataColumnSpec[] colSpecs){
-        super(colSpecs);
-        m_audioColIdx = audioColIdx;
-        m_recognizer = recognizer;
+    String getVersion() {
+        return m_version;
+    }
+
+    /**
+     * @param version the version to set
+     */
+    void setVersion(final String version) {
+        m_version = version;
+    }
+
+    /**
+     * @return the header
+     */
+    @JsonIgnore
+    Object getHeader() {
+        // Ignore header
+        return null;
+    }
+
+    /**
+     * @param header the header to set
+     */
+    @JsonIgnore
+    void setHeader(final String header) {
+        // Ignore header
+    }
+
+    /**
+     * @return the results
+     */
+    List<Result> getResults() {
+        return m_results;
+    }
+
+    /**
+     * @param results the results to set
+     */
+    void setResults(final List<Result> results) {
+        m_results = results;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public DataCell[] getCells(final DataRow row) {
-        final DataCell[] cells = new DataCell[getColumnSpecs().length];
-        final DataCell audioCell = row.getCell(m_audioColIdx);
-        if(!audioCell.getType().isCompatible(AudioValue.class)){
-            throw new IllegalStateException("Invalid column type");
+    public String toString() {
+        final StringBuilder builder = new StringBuilder();
+        builder.append("[version]: ").append(m_version).append("\n");
+        builder.append("[results]\n");
+        for(Result res : m_results){
+            builder.append("scenario: ").append(res.getScenario()).append("\n");
+            builder.append("name: ").append(res.getName()).append("\n");
+            builder.append("lexical: ").append(res.getLexical()).append("\n");
+            builder.append("confidence: ").append(res.getConfidence()).append("\n\n");
         }
 
-        if(audioCell.isMissing()){
-            for(int i = 0; i < cells.length; i++){
-                cells[i] = DataType.getMissingCell();
-            }
-        } else {
-            /* Create a new audio cell containing the recognition result
-             * to replace the old one */
-            final Audio newAudio = AudioBuilder.createAudio(
-                ((AudioCell) audioCell).getAudio());
-//            final RecognitionResult result = m_recognizer.recognize(newAudio);
-
-            final RecognitionResult result = new RecognitionResult(
-                m_recognizer.getName(),
-                "Dummy Transcript " + row.getKey());
-            newAudio.addRecognitionResult(result);
-            cells[0] = new AudioCell(newAudio);
-
-            /* Append the transcription if it is necessary */
-            if(cells.length == 2){
-                cells[1] = new StringCell(result.getTranscript());
-            }
-        }
-        return cells;
+        return builder.toString();
     }
 
 }

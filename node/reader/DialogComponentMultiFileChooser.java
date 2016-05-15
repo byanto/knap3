@@ -49,6 +49,7 @@
  *   12 Nov 2009 (hornm): created
  */
 package org.knime.base.node.audio3.node.reader;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
