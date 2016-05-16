@@ -50,7 +50,10 @@ public class AudioReaderNodeModel extends NodeModel {
         final BufferedDataContainer bdc = exec.createDataContainer(createOutSpec());
         final AudioCellFactory cellFactory = new AudioCellFactory();
         int rowId = 0;
+        final int totalRows = m_files.getStringArrayValue().length;
         for(final String file : m_files.getStringArrayValue()){
+            exec.checkCanceled();
+            exec.setProgress(rowId / (double)totalRows, "Reading " + rowId + " of " + totalRows + " rows");
             final DataCell cell = cellFactory.createCell(
                 AudioBuilder.createAudio(file));
             final DataRow row = new DefaultRow(("row" + (rowId++)), cell);
