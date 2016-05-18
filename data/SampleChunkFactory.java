@@ -98,16 +98,16 @@ public class SampleChunkFactory {
     public SampleChunkFactory(final Audio audio, final int chunkSizeInSamples) throws UnsupportedAudioFileException, IOException {
         this(audio, ChunkType.BYTE, 0);
         m_chunkSizeInSamples = chunkSizeInSamples;
-        m_chunkSizeInBytes = m_chunkSizeInSamples *
-                audio.getAudioFileFormat().getFormat().getFrameSize();
+//        m_chunkSizeInBytes = m_chunkSizeInSamples *
+//                audio.getAudioFileFormat().getFormat().getFrameSize();
         m_chunkOverlapOffsetInSamples = 0;
     }
 
     public SampleChunkFactory(final Audio audio, final float chunkSizeInSeconds) throws UnsupportedAudioFileException, IOException {
         this(audio, ChunkType.BYTE, 0);
-        final AudioFormat audioFormat = audio.getAudioFileFormat().getFormat();
-        m_chunkSizeInSamples = (int)(chunkSizeInSeconds * audioFormat.getFrameRate());
-        m_chunkSizeInBytes = m_chunkSizeInSamples * audioFormat.getFrameSize();
+//        final AudioFormat audioFormat = audio.getAudioFileFormat().getFormat();
+//        m_chunkSizeInSamples = (int)(chunkSizeInSeconds * audioFormat.getFrameRate());
+//        m_chunkSizeInBytes = m_chunkSizeInSamples * audioFormat.getFrameSize();
         m_chunkOverlapOffsetInSamples = 0;
     }
 
@@ -116,8 +116,8 @@ public class SampleChunkFactory {
         this(audio, mixedDownToMonoChannel ? ChunkType.MONO_CHANNEL : ChunkType.MULTI_CHANNELS,
             chunkOverlapInPercent);
         m_chunkSizeInSamples = chunkSizeInSamples;
-        m_chunkSizeInBytes = m_chunkSizeInSamples *
-                audio.getAudioFileFormat().getFormat().getFrameSize();
+//        m_chunkSizeInBytes = m_chunkSizeInSamples *
+//                audio.getAudioFileFormat().getFormat().getFrameSize();
         m_chunkOverlapOffsetInSamples = (int)((chunkOverlapInPercent / 100f) * m_chunkSizeInSamples);
     }
 
@@ -125,10 +125,10 @@ public class SampleChunkFactory {
             final int chunkOverlapInPercent, final boolean mixedDownToMonoChannel) throws UnsupportedAudioFileException, IOException{
         this(audio, mixedDownToMonoChannel ? ChunkType.MONO_CHANNEL : ChunkType.MULTI_CHANNELS,
             chunkOverlapInPercent);
-        final AudioFormat audioFormat = audio.getAudioFileFormat().getFormat();
-        m_chunkSizeInSamples = (int)(chunkSizeInSeconds * audioFormat.getFrameRate());
-        m_chunkSizeInBytes = m_chunkSizeInSamples * audioFormat.getFrameSize();
-        m_chunkOverlapOffsetInSamples = (int)((chunkOverlapInPercent / 100f) * m_chunkSizeInSamples);
+//        final AudioFormat audioFormat = audio.getAudioFileFormat().getFormat();
+//        m_chunkSizeInSamples = (int)(chunkSizeInSeconds * audioFormat.getFrameRate());
+//        m_chunkSizeInBytes = m_chunkSizeInSamples * audioFormat.getFrameSize();
+//        m_chunkOverlapOffsetInSamples = (int)((chunkOverlapInPercent / 100f) * m_chunkSizeInSamples);
     }
 
     private SampleChunkFactory(final Audio audio, final SampleChunk.ChunkType chunkType,

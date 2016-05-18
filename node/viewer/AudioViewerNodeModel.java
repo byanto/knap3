@@ -127,7 +127,6 @@ public class AudioViewerNodeModel extends NodeModel {
         final File file = new File(internDir, SETTINGS_FILE);
         final BufferedDataInputStream input = new BufferedDataInputStream(
             new FileInputStream(file));
-        System.out.println(file.getAbsolutePath());
         final int size = input.readInt();
         m_audioList = new ArrayList<Audio>(size);
         for(int i = 0; i < size; i++){

@@ -310,6 +310,7 @@ public class AudioUtils {
        AudioInputStream convertedStream = AudioMethods.getConvertedAudioStream(originalStream);
        final AudioFormat audioFormat = convertedStream.getFormat();
        double[][] channelSamples = null;
+
        try{
            channelSamples = AudioMethods.extractSampleValues(convertedStream);
        } catch(Exception ex){

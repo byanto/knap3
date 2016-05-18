@@ -54,8 +54,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.sound.sampled.AudioFileFormat;
-import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import org.knime.base.node.audio3.data.io.BufferedDataInputStream;
@@ -72,7 +70,6 @@ import org.knime.core.util.UniqueNameGenerator;
 public class Audio {
 
     private File m_file;
-    private AudioFileFormat m_audioFileFormat;
     private Map<String, RecognitionResult> m_recognitionResults;
 
     /**
@@ -92,16 +89,13 @@ public class Audio {
             throw new IllegalArgumentException("File " + file.getName() + " doesn't exist.");
         }
         m_file = file;
-        m_audioFileFormat = AudioSystem.getAudioFileFormat(m_file);
         m_recognitionResults = new LinkedHashMap<String, RecognitionResult>();
     }
 
-    Audio(final File file, final AudioFileFormat audioFileFormat,
-            final Map<String, RecognitionResult> recognitionResults){
+    Audio(final File file, final Map<String, RecognitionResult> recognitionResults) {
         m_file = file;
-        m_audioFileFormat = audioFileFormat;
         m_recognitionResults = new LinkedHashMap<String, RecognitionResult>();
-        for(Entry<String, RecognitionResult> entry : recognitionResults.entrySet()){
+        for (Entry<String, RecognitionResult> entry : recognitionResults.entrySet()) {
             m_recognitionResults.put(entry.getKey(), entry.getValue());
         }
     }
@@ -118,13 +112,6 @@ public class Audio {
      */
     public String getName(){
         return m_file.getName();
-    }
-
-    /**
-     * @return the {@link AudioFileFormat} of the audio file
-     */
-    public AudioFileFormat getAudioFileFormat(){
-        return m_audioFileFormat;
     }
 
     /**
@@ -250,7 +237,6 @@ public class Audio {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((m_audioFileFormat == null) ? 0 : m_audioFileFormat.hashCode());
         result = prime * result + ((m_file == null) ? 0 : m_file.hashCode());
         result = prime * result + ((m_recognitionResults == null) ? 0 : m_recognitionResults.hashCode());
         return result;
@@ -271,13 +257,6 @@ public class Audio {
             return false;
         }
         Audio other = (Audio)obj;
-        if (m_audioFileFormat == null) {
-            if (other.m_audioFileFormat != null) {
-                return false;
-            }
-        } else if (!m_audioFileFormat.equals(other.m_audioFileFormat)) {
-            return false;
-        }
         if (m_file == null) {
             if (other.m_file != null) {
                 return false;

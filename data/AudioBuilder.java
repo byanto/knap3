@@ -89,14 +89,13 @@ public class AudioBuilder {
     }
 
     /**
-     *
-     * @param audio
-     * @return a new audio instance
-     */
-    public static Audio createAudio(final Audio audio){
-        return new Audio(audio.getFile(), audio.getAudioFileFormat(),
-            audio.getRecognitionResults());
-    }
+    *
+    * @param audio
+    * @return a new audio instance
+    */
+   public static Audio createAudio(final Audio audio){
+       return new Audio(audio.getFile(), audio.getRecognitionResults());
+   }
 
     /**
      *

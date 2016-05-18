@@ -195,8 +195,11 @@ public class AudioPlayer implements Runnable{
 //        }
 //    }
 
-    private void openSourceDataLine() throws LineUnavailableException{
-        final AudioFormat audioFormat = m_audio.getAudioFileFormat().getFormat();
+    private void openSourceDataLine() throws LineUnavailableException,
+            UnsupportedAudioFileException, IOException{
+//        final AudioFormat audioFormat = m_audio.getAudioFileFormat().getFormat();
+        final AudioFormat audioFormat = AudioSystem.getAudioFileFormat(
+            m_audio.getFile()).getFormat();
         final DataLine.Info info = new DataLine.Info(SourceDataLine.class,
             audioFormat);
         m_line = (SourceDataLine) AudioSystem.getLine(info);

@@ -54,7 +54,9 @@ import java.awt.GridLayout;
 import java.io.IOException;
 import java.util.Set;
 
+import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -78,6 +80,7 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.knime.base.node.audio3.data.Audio;
 import org.knime.base.node.audio3.data.recognizer.RecognitionResult;
+import org.knime.base.node.audio3.util.AudioErrorUtils;
 import org.knime.base.node.audio3.util.AudioUtils;
 import org.knime.core.node.NodeLogger;
 
@@ -171,14 +174,23 @@ class AudioCellView extends JPanel{
             }
         };
 
-        final AudioFormat format = m_audio.getAudioFileFormat().getFormat();
+        AudioFileFormat fileFormat = null;
+
+        try {
+            fileFormat = AudioSystem.getAudioFileFormat(m_audio.getFile());
+        } catch (UnsupportedAudioFileException | IOException ex) {
+            AudioErrorUtils.showError(this, ex.getMessage(), "Cannot open file.");
+            return null;
+        }
+
+        final AudioFormat format = fileFormat.getFormat();
         model.addRow(new Object[]{"Name", m_audio.getName()});
         model.addRow(new Object[]{"Path", m_audio.getFile().getAbsolutePath()});
-        model.addRow(new Object[]{"Length in Bytes", m_audio.getAudioFileFormat().getByteLength()});
+        model.addRow(new Object[]{"Length in Bytes", fileFormat.getByteLength()});
         model.addRow(new Object[]{"Length in Seconds",
             AudioUtils.convertSamplesToTime(m_totalSamples, format.getSampleRate())});
-        model.addRow(new Object[]{"Length in Frames", m_audio.getAudioFileFormat().getFrameLength()});
-        model.addRow(new Object[]{"Type", m_audio.getAudioFileFormat().getType()});
+        model.addRow(new Object[]{"Length in Frames", fileFormat.getFrameLength()});
+        model.addRow(new Object[]{"Type", fileFormat.getType()});
 
         // Audio Format
         model.addRow(new Object[]{"Encoding", format.getEncoding()});

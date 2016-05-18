@@ -94,24 +94,24 @@ public enum DataExtractor {
         public DataType getType() {
             return StringCell.TYPE;
         }
-    }),
-
-    /** Returns the type of an audio */
-    TYPE("Type", new Extractor() {
-        @Override
-        public DataCell getValue(final Audio audio) {
-            final String type = audio.getAudioFileFormat().getType().toString();
-            if(StringUtils.isBlank(type)){
-                return DataType.getMissingCell();
-            }
-            return new StringCell(type);
-        }
-
-        @Override
-        public DataType getType() {
-            return StringCell.TYPE;
-        }
     });
+
+//    /** Returns the type of an audio */
+//    TYPE("Type", new Extractor() {
+//        @Override
+//        public DataCell getValue(final Audio audio) {
+//            final String type = audio.getAudioFileFormat().getType().toString();
+//            if(StringUtils.isBlank(type)){
+//                return DataType.getMissingCell();
+//            }
+//            return new StringCell(type);
+//        }
+//
+//        @Override
+//        public DataType getType() {
+//            return StringCell.TYPE;
+//        }
+//    });
 
 //    /** Returns the recognition results of an audio */
 //    RECOGNITION("Recognition", new Extractor() {
