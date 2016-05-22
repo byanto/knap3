@@ -44,27 +44,23 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 28, 2016 (budiyanto): created
+ *   May 22, 2016 (budiyanto): created
  */
 package org.knime.base.node.audio3.data.feature;
 
 import org.knime.base.node.audio3.data.AudioSamples;
-import org.oc.ocvolume.dsp.featureExtraction;
 
 /**
  *
  * @author Budi Yanto, KNIME.com
  */
-public class MFCC extends FeatureExtractor{
-
-    private static final String PARAMETER_NAME = FeatureType.MFCC.getParameters()[0];
-    private static final int DEFAULT_PARAMETER_VALUE = 13;
+public class ZeroCrossings extends FeatureExtractor {
 
     /**
      *
      */
-    protected MFCC() {
-        super(FeatureType.MFCC, new double[]{DEFAULT_PARAMETER_VALUE});
+    public ZeroCrossings() {
+        super(FeatureType.ZERO_CROSSINGS);
     }
 
     /**
@@ -73,15 +69,10 @@ public class MFCC extends FeatureExtractor{
     @Override
     public double[] extractFeature(final AudioSamples samples,
             final double[][] additionalFeatureValues) throws Exception {
-        final featureExtraction extractor = new featureExtraction();
-        extractor.numCepstra = getParameterValue(PARAMETER_NAME).intValue();
-        final int[] cbin = extractor.fftBinIndices(
-            samples.getAudioFormat().getSampleRate(),
-            additionalFeatureValues[0].length);
-        final double[] fbank = extractor.melFilter(additionalFeatureValues[0], cbin);
-        final double[] f = extractor.nonLinearTransformation(fbank);
-        final double[] cepc = extractor.cepCoefficients(f);
-        return cepc;
+        final jAudioFeatureExtractor.AudioFeatures.ZeroCrossings zc =
+                new jAudioFeatureExtractor.AudioFeatures.ZeroCrossings();
+        return zc.extractFeature(samples.getSamplesMixedDownIntoOneChannel(),
+            samples.getAudioFormat().getSampleRate(), additionalFeatureValues);
     }
 
     /**
@@ -89,7 +80,7 @@ public class MFCC extends FeatureExtractor{
      */
     @Override
     public int getDimension(final int windowSize) {
-        return getParameterValue(PARAMETER_NAME).intValue();
+        return 1;
     }
 
 }

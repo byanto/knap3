@@ -15,7 +15,6 @@ import org.knime.base.node.audio3.data.feature.FeatureType;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.container.ColumnRearranger;
-import org.knime.core.data.def.DoubleCell;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -242,7 +241,7 @@ public class FeatureExtractorNodeModel extends NodeModel {
             for(int dim = 0; dim < dimension; dim++){
                 final UniqueNameGenerator generator = new UniqueNameGenerator(colNames);
                 final DataColumnSpec colSpec = generator.newColumn(
-                    extractor.getType().getName(), DoubleCell.TYPE);
+                    type.getName(), type.getDataType());
                 colSpecsList.add(colSpec);
                 colNames.add(colSpec.getName());
             }
@@ -262,30 +261,6 @@ public class FeatureExtractorNodeModel extends NodeModel {
 
         return rearranger;
     }
-
-
-
-//    /**
-//     * @param origSpec the original {@link DataTableSpec}
-//     * @param extractors the extractors to use
-//     * @return the {@link DataColumnSpec} for the given
-//     * {@link AudioFeatureCellExtractor} in the same order as given
-//     */
-//    private static DataColumnSpec[] createColumnSpecs(
-//            final DataTableSpec origSpec,
-//            final AudioFeatureCellExtractor[] extractors) {
-//        if (extractors == null || extractors.length < 1) {
-//            return new DataColumnSpec[0];
-//        }
-//        final DataColumnSpec[] cols = new DataColumnSpec[extractors.length];
-//        for (int i = 0, length = extractors.length; i < length; i++) {
-//             final String name = DataTableSpec.getUniqueColumnName(origSpec,
-//                     extractors[i].getType().getName());
-//             final DataType type = extractors[i].getDataType();
-//             cols[i] = new DataColumnSpecCreator(name, type).createSpec();
-//        }
-//        return cols;
-//    }
 
 }
 

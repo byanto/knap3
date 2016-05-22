@@ -51,7 +51,6 @@ package org.knime.base.node.audio3.data.feature;
 import org.knime.base.node.audio3.data.AudioSamples;
 
 import jAudioFeatureExtractor.GeneralTools.Statistics;
-import jAudioFeatureExtractor.jAudioTools.FFT;
 
 /**
  *
@@ -72,9 +71,10 @@ public class PowerSpectrum extends FeatureExtractor{
     @Override
     public double[] extractFeature(final AudioSamples samples,
             final double[][] additionalFeatureValues) throws Exception {
-        final FFT fft = new FFT(samples.getSamplesMixedDownIntoOneChannel(),
-            null, false, true);
-        return fft.getPowerSpectrum();
+        return new jAudioFeatureExtractor.AudioFeatures.PowerSpectrum()
+                .extractFeature(samples.getSamplesMixedDownIntoOneChannel(),
+                    samples.getAudioFormat().getSampleRate(),
+                    additionalFeatureValues);
     }
 
     /**

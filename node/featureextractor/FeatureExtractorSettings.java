@@ -128,13 +128,13 @@ class FeatureExtractorSettings {
     }
 
     void setParameterValue(final FeatureType type, final String parameter,
-            final int value){
+            final double value){
         if(m_featuresMap.containsKey(type)){
             m_featuresMap.get(type).setParameterValue(parameter, value);
         }
     }
 
-    Integer getParameterValue(final FeatureType type, final String parameter){
+    Double getParameterValue(final FeatureType type, final String parameter){
         if(m_featuresMap.containsKey(type)){
             return m_featuresMap.get(type).getParameterValue(parameter);
         }
@@ -171,13 +171,13 @@ class FeatureExtractorSettings {
         private static final boolean DEFAULT_IS_SELECTED = false;
 
         private boolean m_isSelected;
-        private final Map<String, Integer> m_parameters;
+        private final Map<String, Double> m_parameters;
 
         private FeatureSetting(final FeatureType type){
             m_isSelected = DEFAULT_IS_SELECTED;
             if(type.hasParameters()){
                 final FeatureExtractor extractor = FeatureExtractor.getFeatureExtractor(type);
-                m_parameters = new LinkedHashMap<String, Integer>();
+                m_parameters = new LinkedHashMap<String, Double>();
                 for(final String parameter : type.getParameters()){
                     m_parameters.put(parameter, extractor.getParameterValue(parameter));
                 }
@@ -190,8 +190,8 @@ class FeatureExtractorSettings {
             settings.addBoolean(CFG_IS_SELECTED, isSelected());
             if(m_parameters != null && m_parameters.size() > 0){
                 final NodeSettingsWO cfg = settings.addNodeSettings(CFG_PARAMETERS);
-                for(final Entry<String, Integer> entry : m_parameters.entrySet()){
-                    cfg.addInt(entry.getKey(), entry.getValue());
+                for(final Entry<String, Double> entry : m_parameters.entrySet()){
+                    cfg.addDouble(entry.getKey(), entry.getValue());
                 }
             }
         }
@@ -202,7 +202,7 @@ class FeatureExtractorSettings {
                 final NodeSettingsRO cfg = settings.getNodeSettings(CFG_PARAMETERS);
                 m_parameters.clear();
                 for(final String key : cfg.keySet()){
-                    m_parameters.put(key, cfg.getInt(key));
+                    m_parameters.put(key, cfg.getDouble(key));
                 }
             } catch(InvalidSettingsException ex){
                 // No parameters
@@ -214,7 +214,7 @@ class FeatureExtractorSettings {
             if(m_parameters != null){
                 final NodeSettingsRO cfg = settings.getNodeSettings(CFG_PARAMETERS);
                 for(final String key : cfg.keySet()){
-                    cfg.getInt(key);
+                    cfg.getDouble(key);
                 }
             }
         }
@@ -227,7 +227,7 @@ class FeatureExtractorSettings {
             return m_isSelected;
         }
 
-        private void setParameterValue(final String parameter, final int value){
+        private void setParameterValue(final String parameter, final double value){
             if(m_parameters != null && m_parameters.size() > 0){
                 m_parameters.put(parameter, value);
             }
@@ -238,7 +238,7 @@ class FeatureExtractorSettings {
          * @param parameter the parameter whose value should be returned
          * @return the value of the given parameter or null if the parameter doesn't exist
          */
-        private Integer getParameterValue(final String parameter){
+        private Double getParameterValue(final String parameter){
             if(m_parameters != null && m_parameters.size() > 0){
                 return m_parameters.get(parameter);
             }

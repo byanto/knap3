@@ -60,14 +60,14 @@ import org.knime.base.node.audio3.data.AudioSamples;
 public abstract class FeatureExtractor {
 
     private final FeatureType m_type;
-    private final Map<String, Integer> m_parameters = new LinkedHashMap<String, Integer>();
+    private final Map<String, Double> m_parameters = new LinkedHashMap<String, Double>();
 
     /**
      *
      * @param type
      */
     protected FeatureExtractor(final FeatureType type) {
-        this(type, new int[0]);
+        this(type, new double[0]);
     }
 
     /**
@@ -75,7 +75,7 @@ public abstract class FeatureExtractor {
      * @param type
      * @param parameterValues
      */
-    protected FeatureExtractor(final FeatureType type, final int[] parameterValues){
+    protected FeatureExtractor(final FeatureType type, final double[] parameterValues){
         if(type == null){
             throw new IllegalArgumentException("Feature type cannot be null");
         }
@@ -106,7 +106,7 @@ public abstract class FeatureExtractor {
      * @param parameter the parameter whose value should be returned
      * @return the value of the given parameter, returns null if the parameter doesn't exist
      */
-    public Integer getParameterValue(final String parameter){
+    public Double getParameterValue(final String parameter){
         if(m_parameters != null){
             return m_parameters.get(parameter);
         }
@@ -118,7 +118,7 @@ public abstract class FeatureExtractor {
      * @param parameter the parameter whose value should be set
      * @param value the value to set
      */
-    public void setParameterValue(final String parameter, final int value){
+    public void setParameterValue(final String parameter, final double value){
         if(m_parameters != null &&  m_parameters.containsKey(parameter)){
             m_parameters.put(parameter, value);
         }
@@ -153,6 +153,24 @@ public abstract class FeatureExtractor {
                 return new MagnitudeSpectrum();
             case MFCC:
                 return new MFCC();
+            case SPECTRAL_CENTROID:
+                return new SpectralCentroid();
+            case SPECTRAL_ROLLOFF_POINT:
+                return new SpectralRolloffPoint();
+            case COMPACTNESS:
+                return new Compactness();
+            case ROOT_MEAN_SQUARE:
+                return new RootMeanSquare();
+            case ZERO_CROSSINGS:
+                return new ZeroCrossings();
+            case LPC:
+                return new LPC();
+            case PEAK_DETECTION:
+                return new PeakDetection();
+            case CONSTANTQ:
+                return new ConstantQ();
+            case CHROMA:
+                return new Chroma();
             default:
                 throw new IllegalArgumentException("There isn't extractor defined "
                     + "for the given feature type: " + type);

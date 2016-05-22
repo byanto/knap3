@@ -44,52 +44,50 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 28, 2016 (budiyanto): created
+ *   May 22, 2016 (budiyanto): created
  */
 package org.knime.base.node.audio3.data.feature;
 
-import org.knime.base.node.audio3.data.AudioSamples;
-import org.oc.ocvolume.dsp.featureExtraction;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  *
- * @author Budi Yanto, KNIME.com
+ * @author budiyanto
  */
-public class MFCC extends FeatureExtractor{
-
-    private static final String PARAMETER_NAME = FeatureType.MFCC.getParameters()[0];
-    private static final int DEFAULT_PARAMETER_VALUE = 13;
+public class FeatureTest {
 
     /**
-     *
+     * @param args
      */
-    protected MFCC() {
-        super(FeatureType.MFCC, new double[]{DEFAULT_PARAMETER_VALUE});
+    public static void main(final String[] args) {
+//        FeatureExtractor[] extractors = FeatureExtractor.getFeatureExtractors(
+//            FeatureType.DUMMY3, FeatureType.DUMMY2, FeatureType.DUMMY1,
+//            FeatureType.CHROMA, FeatureType.MFCC, FeatureType.PEAK_DETECTION,
+//            FeatureType.POWER_SPECTRUM, FeatureType.MAGNITUDE_SPECTRUM);
+
+        FeatureType[] types = new FeatureType[]{
+//            FeatureType.DUMMY3, FeatureType.DUMMY2, FeatureType.DUMMY1,
+            FeatureType.CHROMA, FeatureType.MFCC, FeatureType.PEAK_DETECTION,
+            FeatureType.POWER_SPECTRUM, FeatureType.MAGNITUDE_SPECTRUM
+        };
+        Set<FeatureType> result = new LinkedHashSet<FeatureType>();
+        for(FeatureType ext : types){
+            addToSet(ext, result);
+        }
+        System.out.println("Set length: " + result.size());
+        for(FeatureType ft : result){
+            System.out.println("Type: " + ft.getName());
+        }
+
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public double[] extractFeature(final AudioSamples samples,
-            final double[][] additionalFeatureValues) throws Exception {
-        final featureExtraction extractor = new featureExtraction();
-        extractor.numCepstra = getParameterValue(PARAMETER_NAME).intValue();
-        final int[] cbin = extractor.fftBinIndices(
-            samples.getAudioFormat().getSampleRate(),
-            additionalFeatureValues[0].length);
-        final double[] fbank = extractor.melFilter(additionalFeatureValues[0], cbin);
-        final double[] f = extractor.nonLinearTransformation(fbank);
-        final double[] cepc = extractor.cepCoefficients(f);
-        return cepc;
-    }
+    private static void addToSet(final FeatureType type, final Set<FeatureType> set){
+//        System.out.println("Added: " + type.getName());
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int getDimension(final int windowSize) {
-        return getParameterValue(PARAMETER_NAME).intValue();
+        for(FeatureType t : type.getDependencies()){
+            addToSet(t, set);
+        }
+        set.add(type);
     }
-
 }

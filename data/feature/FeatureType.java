@@ -48,6 +48,15 @@
  */
 package org.knime.base.node.audio3.data.feature;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.knime.core.data.DataCell;
+import org.knime.core.data.DataType;
+import org.knime.core.data.collection.CollectionCellFactory;
+import org.knime.core.data.collection.ListCell;
+import org.knime.core.data.def.DoubleCell;
+
 /**
  *
  * @author Budi Yanto, KNIME.com
@@ -61,7 +70,18 @@ public enum FeatureType {
         "Power Spectrum",
         "A measure of the power of different frequency components.",
         new FeatureType[0],
-        new String[0]),
+        new String[0],
+        new CellExtractor() {
+            @Override
+            public DataCell[] getCells(final double[] featureValues) {
+                return getDoubleArrayCells(featureValues);
+            }
+
+            @Override
+            public DataType getDataType() {
+                return DoubleCell.TYPE;
+            }
+        }),
 
     /**
      *
@@ -70,7 +90,18 @@ public enum FeatureType {
         "Magnitude Spectrum",
         "A measure of the strength of different frequency components.",
         new FeatureType[0],
-        new String[0]),
+        new String[0],
+        new CellExtractor() {
+            @Override
+            public DataCell[] getCells(final double[] featureValues) {
+                return getDoubleArrayCells(featureValues);
+            }
+
+            @Override
+            public DataType getDataType() {
+                return DoubleCell.TYPE;
+            }
+        }),
 
     /**
      *
@@ -79,7 +110,223 @@ public enum FeatureType {
         "MFCC",
         "MFCC calculations based upon Orange Cow code.",
         new FeatureType[]{MAGNITUDE_SPECTRUM},
-        new String[]{"Number of coefficients"});
+        new String[]{"Number of coefficients"},
+        new CellExtractor() {
+            @Override
+            public DataCell[] getCells(final double[] featureValues) {
+                return getDoubleArrayCells(featureValues);
+            }
+
+            @Override
+            public DataType getDataType() {
+                return DoubleCell.TYPE;
+            }
+        }),
+
+    /**
+     *
+     */
+    SPECTRAL_CENTROID(
+        "Spectral Centroid",
+        "The center of mass of the power spectrum.",
+        new FeatureType[]{POWER_SPECTRUM},
+        new String[0],
+        new CellExtractor() {
+            @Override
+            public DataCell[] getCells(final double[] featureValues) {
+                return getDoubleArrayCells(featureValues);
+            }
+
+            @Override
+            public DataType getDataType() {
+                return DoubleCell.TYPE;
+            }
+        }),
+
+    /**
+     *
+     */
+    SPECTRAL_ROLLOFF_POINT(
+        "Spectral Rolloff Point",
+        "The fraction of bins in the power spectrum at which 85% of the power "
+        + "is at lower frequencies. This is a measure of the right-skewedness "
+        + "of the power spectrum.",
+        new FeatureType[]{POWER_SPECTRUM},
+        new String[]{"Cutoff point (0-1)"},
+        new CellExtractor() {
+            @Override
+            public DataCell[] getCells(final double[] featureValues) {
+                return getDoubleArrayCells(featureValues);
+            }
+
+            @Override
+            public DataType getDataType() {
+                return DoubleCell.TYPE;
+            }
+        }),
+
+    /**
+     *
+     */
+    COMPACTNESS(
+        "Compactness",
+        "A measure of the noisiness of a signal. Found by comparing the "
+        + "components of a window's magnitude spectrum with the magnitude "
+        + "spectrum of its neighbouring windows.",
+        new FeatureType[]{MAGNITUDE_SPECTRUM},
+        new String[0],
+        new CellExtractor() {
+            @Override
+            public DataCell[] getCells(final double[] featureValues) {
+                return getDoubleArrayCells(featureValues);
+            }
+
+            @Override
+            public DataType getDataType() {
+                return DoubleCell.TYPE;
+            }
+        }),
+
+    /**
+     *
+     */
+    ROOT_MEAN_SQUARE(
+        "Root Mean Square",
+        "A measure of the power of a signal.",
+        new FeatureType[0],
+        new String[0],
+        new CellExtractor() {
+            @Override
+            public DataCell[] getCells(final double[] featureValues) {
+                return getDoubleArrayCells(featureValues);
+            }
+
+            @Override
+            public DataType getDataType() {
+                return DoubleCell.TYPE;
+            }
+        }),
+
+    /**
+     *
+     */
+    ZERO_CROSSINGS(
+        "Zero Crosssings",
+        "The number of times the waveform changed sign. An indication of "
+        + "frequency as well as noisiness.",
+        new FeatureType[0],
+        new String[0],
+        new CellExtractor() {
+            @Override
+            public DataCell[] getCells(final double[] featureValues) {
+                return getDoubleArrayCells(featureValues);
+            }
+
+            @Override
+            public DataType getDataType() {
+                return DoubleCell.TYPE;
+            }
+        }),
+
+    /**
+     *
+     */
+    LPC(
+        "LPC",
+        "Linear Prediction Coeffecients calculated using autocorrelation and "
+        + "Levinson-Durbin recursion.",
+        new FeatureType[0],
+        new String[]{"lambda for frequency warping",
+            "number of coeffecients to calculate"},
+        new CellExtractor() {
+            @Override
+            public DataCell[] getCells(final double[] featureValues) {
+                return getDoubleArrayCells(featureValues);
+            }
+
+            @Override
+            public DataType getDataType() {
+                return DoubleCell.TYPE;
+            }
+        }),
+
+    /**
+     *
+     */
+    PEAK_DETECTION(
+        "Peak Detection",
+        "All peaks that are within an order of magnitude of the highest point.",
+        new FeatureType[]{MAGNITUDE_SPECTRUM},
+        new String[]{"Threshold for peak detection"},
+        new CellExtractor() {
+            @Override
+            public DataCell[] getCells(final double[] featureValues) {
+                return getListCells(featureValues);
+            }
+
+            @Override
+            public DataType getDataType() {
+                return ListCell.getCollectionType(DoubleCell.TYPE);
+            }
+        }),
+
+    /**
+     *
+     */
+    CONSTANTQ(
+        "ConstantQ",
+        "Signal to frequency transform using exponential-spaced frequency bins.",
+        new FeatureType[0],
+        new String[]{"Percent of a semitone per bin"},
+        new CellExtractor() {
+            @Override
+            public DataCell[] getCells(final double[] featureValues) {
+                return getListCells(featureValues);
+            }
+
+            @Override
+            public DataType getDataType() {
+                return ListCell.getCollectionType(DoubleCell.TYPE);
+            }
+        }),
+
+    /**
+     *
+     */
+    CHROMA(
+        "Chroma",
+        "Basic chroma feature derived from ConstantQ function output.",
+        new FeatureType[]{CONSTANTQ},
+        new String[0],
+        new CellExtractor() {
+            @Override
+            public DataCell[] getCells(final double[] featureValues) {
+                return getDoubleArrayCells(featureValues);
+            }
+
+            @Override
+            public DataType getDataType() {
+                return DoubleCell.TYPE;
+            }
+        });
+
+//    DUMMY1(
+//        "Dummy1",
+//        "Basic Dummy1",
+//        new FeatureType[]{CONSTANTQ, MFCC, CHROMA},
+//        new String[0]),
+//
+//    DUMMY2(
+//        "Dummy2",
+//        "Basic Dummy2.",
+//        new FeatureType[]{DUMMY1, MFCC, POWER_SPECTRUM},
+//        new String[0]),
+//
+//    DUMMY3(
+//        "Dummy3",
+//        "Basic Dummy3.",
+//        new FeatureType[]{DUMMY2, POWER_SPECTRUM, CHROMA},
+//        new String[0]);
 
     private final String m_name;
 
@@ -89,13 +336,19 @@ public enum FeatureType {
 
     private final String[] m_parameters;
 
+    private final CellExtractor m_cellExtractor;
+
     private FeatureType(final String name, final String description, final FeatureType[] dependencies,
-        final String[] parameters) {
+        final String[] parameters, final CellExtractor cellExtractor) {
 
         m_name = name;
         m_description = description;
         m_dependencies = dependencies;
         m_parameters = parameters;
+        if (cellExtractor == null) {
+            throw new NullPointerException("Extractor must not be null");
+        }
+        m_cellExtractor = cellExtractor;
     }
 
     /**
@@ -139,6 +392,21 @@ public enum FeatureType {
      */
     public String[] getParameters() {
         return m_parameters;
+    }
+
+    /**
+     * @param featureValues
+     * @return data cells
+     */
+    public DataCell[] getDataCells(final double[] featureValues){
+        return m_cellExtractor.getCells(featureValues);
+    }
+
+    /**
+     * @return {@link DataType}
+     */
+    public DataType getDataType(){
+        return m_cellExtractor.getDataType();
     }
 
     /**
@@ -199,6 +467,41 @@ public enum FeatureType {
             return types[0];
         }
         return null;
+    }
+
+    private interface CellExtractor{
+        /**
+         * @param featureValues the feature values to extract the data from
+         * @return the extracted data as {@link DataCell}
+         */
+        public DataCell[] getCells(final double[] featureValues);
+
+        /**
+         * @return the {@link DataType}
+         */
+        public DataType getDataType();
+    }
+
+    private static DataCell[] getDoubleArrayCells(final double[] featureValues){
+        if(featureValues == null || featureValues.length == 0){
+            return new DataCell[]{DataType.getMissingCell()};
+        }
+        final DataCell[] cells = new DataCell[featureValues.length];
+        for(int i = 0; i < featureValues.length; i++){
+            cells[i] = new DoubleCell(featureValues[i]);
+        }
+        return cells;
+    }
+
+    private static DataCell[] getListCells(final double[] featureValues){
+        if(featureValues == null || featureValues.length == 0){
+            return new DataCell[]{DataType.getMissingCell()};
+        }
+        final List<DoubleCell> cells = new ArrayList<DoubleCell>();
+        for(double val : featureValues){
+            cells.add(new DoubleCell(val));
+        }
+        return new DataCell[]{CollectionCellFactory.createListCell(cells)};
     }
 
 }

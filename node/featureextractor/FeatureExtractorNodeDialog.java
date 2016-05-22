@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JLabel;
@@ -335,16 +336,41 @@ public class FeatureExtractorNodeDialog extends DefaultNodeSettingsPane {
             m_spinnerMap = new HashMap<String, SpinnerModel>();
             setLayout(new BorderLayout());
             setResizable(false);
-            final JPanel centerPanel = new JPanel();
+
+            final Box box = Box.createVerticalBox();
             for (String param : type.getParameters()) {
+                final JPanel panel = new JPanel();
                 final JLabel label = new JLabel(param);
-                final SpinnerModel model = new SpinnerNumberModel(m_settings.getParameterValue(type, param).intValue(),
-                    MIN_VALUE, MAX_VALUE, 1);
+                final SpinnerModel model;
+                switch (type) {
+                    case SPECTRAL_ROLLOFF_POINT:
+                        model = new SpinnerNumberModel(m_settings.getParameterValue(type, param).doubleValue(), 0, 1, 0.01);
+                        break;
+                    case LPC:
+                        if(param.equals(FeatureType.LPC.getParameters()[0])){
+                            model = new SpinnerNumberModel(m_settings.getParameterValue(type, param).doubleValue(), 0, 10, 0.1);
+                        }else{
+                            model = new SpinnerNumberModel(m_settings.getParameterValue(type, param).intValue(), 1, 100, 1);
+                        }
+                        break;
+                    case CONSTANTQ:
+                        model = new SpinnerNumberModel(m_settings.getParameterValue(type, param).doubleValue(), 0.1, 10, 0.1);
+                        break;
+                    default:
+                        model = new SpinnerNumberModel(m_settings.getParameterValue(type, param).intValue(), 1, 100, 1);
+                        break;
+                }
+
                 m_spinnerMap.put(param, model);
                 final JSpinner spinner = new JSpinner(model);
-                centerPanel.add(label);
-                centerPanel.add(spinner);
+                JComponent field = spinner.getEditor();
+                field.setPreferredSize(new Dimension(100,
+                    field.getPreferredSize().height));
+                panel.add(label);
+                panel.add(spinner);
+                box.add(panel);
             }
+
             final JButton okButton = new JButton("Ok");
             okButton.addActionListener(new ActionListener() {
 
@@ -352,7 +378,7 @@ public class FeatureExtractorNodeDialog extends DefaultNodeSettingsPane {
                 public void actionPerformed(final ActionEvent e) {
                     for (Entry<String, SpinnerModel> entry : m_spinnerMap.entrySet()) {
                         m_settings.setParameterValue(type, entry.getKey(),
-                            ((Integer)entry.getValue().getValue()).intValue());
+                            ((Double)entry.getValue().getValue()).doubleValue());
                     }
                     closeDialog();
                 }
@@ -369,9 +395,8 @@ public class FeatureExtractorNodeDialog extends DefaultNodeSettingsPane {
             final JPanel buttonPanel = new JPanel();
             buttonPanel.add(okButton);
             buttonPanel.add(cancelButton);
-            add(centerPanel, BorderLayout.CENTER);
+            add(box, BorderLayout.CENTER);
             add(buttonPanel, BorderLayout.SOUTH);
-
         }
 
         private void closeDialog() {
