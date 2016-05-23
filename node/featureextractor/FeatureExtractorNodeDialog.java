@@ -132,7 +132,7 @@ public class FeatureExtractorNodeDialog extends DefaultNodeSettingsPane {
     }
 
     private JPanel createFeaturesTab(){
-        final JPanel panel = new JPanel();
+        final JPanel panel = new JPanel(new BorderLayout());
         /* Content Panel to hold the features selection and description */
         final JPanel contentPanel = new JPanel(new GridLayout(1, 1));
 
