@@ -55,7 +55,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.knime.base.node.audio3.data.feature.FeatureExtractor;
-import org.knime.base.node.audio3.data.feature.FeatureType;
+import org.knime.base.node.audio3.data.feature.mpeg7.MPEG7FeatureType;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -66,19 +66,19 @@ import org.knime.core.node.NodeSettingsWO;
  */
 class FeatureExtractorSettings {
 
-    private final Map<FeatureType, FeatureSetting> m_featuresMap;
+    private final Map<MPEG7FeatureType, FeatureSetting> m_featuresMap;
     private static final String CFG_FEATURES = "features";
 
     FeatureExtractorSettings() {
-        m_featuresMap = new LinkedHashMap<FeatureType, FeatureExtractorSettings.FeatureSetting>();
-        for(FeatureType type : FeatureType.values()){
+        m_featuresMap = new LinkedHashMap<MPEG7FeatureType, FeatureExtractorSettings.FeatureSetting>();
+        for(MPEG7FeatureType type : MPEG7FeatureType.values()){
             m_featuresMap.put(type, new FeatureSetting(type));
         }
     }
 
     void saveSettingsTo(final NodeSettingsWO settings){
         NodeSettingsWO root = settings.addNodeSettings(CFG_FEATURES);
-        for(Entry<FeatureType, FeatureSetting> entry : m_featuresMap.entrySet()){
+        for(Entry<MPEG7FeatureType, FeatureSetting> entry : m_featuresMap.entrySet()){
             NodeSettingsWO cfg = root.addNodeSettings(entry.getKey().getName());
             entry.getValue().saveSettingsTo(cfg);
         }
@@ -89,7 +89,7 @@ class FeatureExtractorSettings {
             final NodeSettingsRO root = settings.getNodeSettings(CFG_FEATURES);
             for(String key : root.keySet()){
                 final NodeSettingsRO cfg = root.getNodeSettings(key);
-                final FeatureType type = FeatureType.getFeatureType(key);
+                final MPEG7FeatureType type = MPEG7FeatureType.getFeatureType(key);
                 if(type != null){
                     m_featuresMap.get(type).loadSettingsFrom(cfg);
                 }
@@ -103,48 +103,48 @@ class FeatureExtractorSettings {
         NodeSettingsRO root = settings.getNodeSettings(CFG_FEATURES);
         for(String key : root.keySet()){
             final NodeSettingsRO cfg = root.getNodeSettings(key);
-            final FeatureType type = FeatureType.getFeatureType(key);
+            final MPEG7FeatureType type = MPEG7FeatureType.getFeatureType(key);
             if(type != null){
                 m_featuresMap.get(type).validateSettings(cfg);
             }
         }
     }
 
-    void setSelected(final FeatureType type, final boolean isSelected){
+    void setSelected(final MPEG7FeatureType type, final boolean isSelected){
         if(m_featuresMap.containsKey(type)){
             m_featuresMap.get(type).setSelected(isSelected);
         }
     }
 
-    Boolean isSelected(final FeatureType type){
+    Boolean isSelected(final MPEG7FeatureType type){
         if(m_featuresMap.containsKey(type)){
             return m_featuresMap.get(type).isSelected();
         }
         return null;
     }
 
-    Set<FeatureType> getAudioFeatureTypes(){
+    Set<MPEG7FeatureType> getMPEG7FeatureTypes(){
         return m_featuresMap.keySet();
     }
 
-    void setParameterValue(final FeatureType type, final String parameter,
+    void setParameterValue(final MPEG7FeatureType type, final String parameter,
             final double value){
         if(m_featuresMap.containsKey(type)){
             m_featuresMap.get(type).setParameterValue(parameter, value);
         }
     }
 
-    Double getParameterValue(final FeatureType type, final String parameter){
+    Double getParameterValue(final MPEG7FeatureType type, final String parameter){
         if(m_featuresMap.containsKey(type)){
             return m_featuresMap.get(type).getParameterValue(parameter);
         }
         return null;
     }
 
-    Set<FeatureType> getSelectedFeatures(){
-        final Set<FeatureType> features = new LinkedHashSet<FeatureType>();
-        for(Entry<FeatureType, FeatureSetting> entry : m_featuresMap.entrySet()){
-            final FeatureType feature = entry.getKey();
+    Set<MPEG7FeatureType> getSelectedFeatures(){
+        final Set<MPEG7FeatureType> features = new LinkedHashSet<MPEG7FeatureType>();
+        for(Entry<MPEG7FeatureType, FeatureSetting> entry : m_featuresMap.entrySet()){
+            final MPEG7FeatureType feature = entry.getKey();
             if(entry.getValue().isSelected()){
                 features.add(feature);
             }
@@ -152,17 +152,17 @@ class FeatureExtractorSettings {
         return features;
     }
 
-    void updateExtractorParameters(final FeatureExtractor... extractors){
-        for(FeatureExtractor extractor : extractors){
-            final FeatureType type = extractor.getType();
-            if(type.hasParameters()){
-                for(final String parameter : type.getParameters()){
-                    extractor.setParameterValue(parameter,
-                        getParameterValue(type, parameter));
-                }
-            }
-        }
-    }
+//    void updateExtractorParameters(final FeatureExtractor... extractors){
+//        for(FeatureExtractor extractor : extractors){
+//            final FeatureType type = extractor.getType();
+//            if(type.hasParameters()){
+//                for(final String parameter : type.getParameters()){
+//                    extractor.setParameterValue(parameter,
+//                        getParameterValue(type, parameter));
+//                }
+//            }
+//        }
+//    }
 
     private class FeatureSetting{
         private static final String CFG_IS_SELECTED = "isSelected";
@@ -173,7 +173,7 @@ class FeatureExtractorSettings {
         private boolean m_isSelected;
         private final Map<String, Double> m_parameters;
 
-        private FeatureSetting(final FeatureType type){
+        private FeatureSetting(final MPEG7FeatureType type){
             m_isSelected = DEFAULT_IS_SELECTED;
             if(type.hasParameters()){
                 final FeatureExtractor extractor = FeatureExtractor.getFeatureExtractor(type);

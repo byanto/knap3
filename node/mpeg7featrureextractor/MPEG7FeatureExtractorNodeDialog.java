@@ -21,6 +21,7 @@ import org.knime.base.node.audio3.data.component.AudioColumnSelection;
 import org.knime.base.node.audio3.data.feature.mpeg7.MPEG7Constants;
 import org.knime.base.node.audio3.data.feature.mpeg7.MPEG7FeatureType;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.DialogComponentStringSelection;
 
@@ -47,6 +48,8 @@ public class MPEG7FeatureExtractorNodeDialog extends DefaultNodeSettingsPane {
 
     private final ParameterUtils m_utils = new ParameterUtils();
 
+//    private final FeatureExtractorSettings m_settings = new FeatureExtractorSettings();
+
     /**
      * New pane for configuring the MPEG7FeatureExtractor node.
      */
@@ -64,9 +67,18 @@ public class MPEG7FeatureExtractorNodeDialog extends DefaultNodeSettingsPane {
         closeCurrentGroup();
         createNewGroup("Global Options");
 
-        addDialogComponent(new DialogComponentStringSelection(
+        final DialogComponentStringSelection hopSizeComp = new DialogComponentStringSelection(
             MPEG7FeatureExtractorNodeModel.createHopSizeModel(),
-            "Hop size [ms]: ", MPEG7Constants.HOP_SIZE));
+            "Hop size [ms]: ", MPEG7Constants.HOP_SIZE);
+        hopSizeComp.setSizeComponents(200, hopSizeComp.getComponentPanel()
+            .getComponent(1).getPreferredSize().height);
+        addDialogComponent(hopSizeComp);
+
+        addDialogComponent(new DialogComponentButtonGroup(
+            MPEG7FeatureExtractorNodeModel.createAggregatorSettingsModel(),
+            false, "Aggregator Method",
+            new String[]{MPEG7FeatureExtractorNodeModel.MEAN,
+                MPEG7FeatureExtractorNodeModel.STD_DEVIATION}));
 
         closeCurrentGroup();
     }
@@ -96,14 +108,14 @@ public class MPEG7FeatureExtractorNodeDialog extends DefaultNodeSettingsPane {
 
         // Create panel for features description
         final JScrollPane descriptionScrollPane = new JScrollPane(m_descriptionPane);
-        descriptionScrollPane.setPreferredSize(new Dimension(400, 200));
+        descriptionScrollPane.setPreferredSize(new Dimension(450, 250));
         descriptionScrollPane.setBorder(BorderFactory.createTitledBorder("Feature Description"));
         rightBox.add(descriptionScrollPane);
 
         // Create panel for editing parameters
         m_parameterPanel = new JPanel();
         m_parameterPanel.setBorder(BorderFactory.createTitledBorder("Feature Parameters"));
-        m_parameterPanel.setPreferredSize(new Dimension(400, 200));
+        m_parameterPanel.setPreferredSize(new Dimension(450, 250));
         m_parameterLabel = new JLabel("No feature is selected");
         m_parameterPanel.add(m_parameterLabel, 0);
         rightBox.add(m_parameterPanel);

@@ -61,7 +61,7 @@ public class MPEG7Constants {
     public static final String[] NORMALIZE = {"off", "norm2", "power"};
 
     /** DB Scale */
-    public static final Boolean[] DB_SCALE = {true, false};
+    public static final Boolean[] DB_SCALE = {false, true};
 
     /** */
     public static final Float[] RESOLUTION = {1f, 1/2f, 1/4f, 1/8f};

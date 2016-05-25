@@ -65,7 +65,7 @@ public enum MPEG7FeatureType {
         "Audio Power",
         "AudioPower",
         "Description AP",
-        new String[0]),
+        new String[]{"logScale"}),
 
     /** Audio Spectrum Envelope */
     AUDIO_SPECTRUM_ENVELOPE(

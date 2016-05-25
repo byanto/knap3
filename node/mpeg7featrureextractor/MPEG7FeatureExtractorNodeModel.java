@@ -22,9 +22,15 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 public class MPEG7FeatureExtractorNodeModel extends NodeModel {
 
+    static final String MEAN = "Mean";
+    static final String STD_DEVIATION = "Standard Deviation";
 
     static SettingsModelString createHopSizeModel(){
         return new SettingsModelString("HopSize", "10");
+    }
+
+    static SettingsModelString createAggregatorSettingsModel(){
+        return new SettingsModelString("Aggregator", MEAN);
     }
 
     /**

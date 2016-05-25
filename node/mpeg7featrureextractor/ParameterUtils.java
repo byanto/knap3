@@ -54,6 +54,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.Box;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -70,44 +72,92 @@ import org.knime.base.node.audio3.data.feature.mpeg7.MPEG7FeatureType;
  */
 class ParameterUtils {
 
+    /* Audio Power */
+    private final JCheckBox m_apLogScale = new JCheckBox("Log Scale");
+
+    /* Audio Spectrum Envelope */
+    private final DefaultComboBoxModel<Float> m_aseLowEdge = new DefaultComboBoxModel<Float>(MPEG7Constants.LOW_EDGE);
+    private final DefaultComboBoxModel<Float> m_aseHighEdge = new DefaultComboBoxModel<Float>(MPEG7Constants.HIGH_EDGE);
+    private final DefaultComboBoxModel<Float> m_aseResolution = new DefaultComboBoxModel<Float>(MPEG7Constants.RESOLUTION);
+    private final DefaultComboBoxModel<Boolean> m_aseDbScale = new DefaultComboBoxModel<Boolean>(MPEG7Constants.DB_SCALE);
+    private final DefaultComboBoxModel<String> m_aseNormalize = new DefaultComboBoxModel<String>(MPEG7Constants.NORMALIZE);
+
+    /* Audio Spectrum Flatness */
+    private final DefaultComboBoxModel<Float>m_asfLowEdge = new DefaultComboBoxModel<Float>(MPEG7Constants.LOW_EDGE);
+    private final DefaultComboBoxModel<Float>m_asfHighEdge = new DefaultComboBoxModel<Float>(MPEG7Constants.HIGH_EDGE);
+
+    /* Audio Fundamental Frequency */
+    private final SpinnerModel m_affLowLimit = new SpinnerNumberModel(50, 1, 16000, 1);
+    private final SpinnerModel m_affHighLimit = new SpinnerNumberModel(12000, 1, 16000, 1);
+
+    /* Signal Envelope -> used by Temporal Centroid & Log Attack Time */
+    private final SpinnerModel m_seWindowLength = new SpinnerNumberModel(10, 1, 100, 1);
+    private final SpinnerModel m_seWindowSlide = new SpinnerNumberModel(5, 1, 100, 1);
+
+    /* Log Attack Time -> Signal Envelope + Threshold */
+    private final SpinnerModel m_latThreshold = new SpinnerNumberModel(0.02, 0.01, 10, 0.01);
+
+    /* Harmonic Peaks -> used by Harmonic Spectral [Centroid | Deviation | Spread | Variation] */
+    private final SpinnerModel m_hpNonHarmonicity = new SpinnerNumberModel(0.15, 0.01, 10, 0.01);
+    private final SpinnerModel m_hpThreshold = new SpinnerNumberModel(0.0, 0.0, 10, 0.1);
+
+    /* Audio Spectrum Basis & Projection */
+    private final SpinnerModel m_asbpNrOfFrames = new SpinnerNumberModel(0, 0, 100, 1);
+    private final SpinnerModel m_asbpNrOfFunctions = new SpinnerNumberModel(8, 0, 100, 1);
+
+
     private Map<MPEG7FeatureType, Component> m_components =
             new HashMap<MPEG7FeatureType, Component>();
 
-    ParameterUtils(){
+    ParameterUtils() {
+        /* Audio Power */
+        m_components.put(MPEG7FeatureType.AUDIO_POWER, m_apLogScale);
+
         /* Audio Spectrum Envelope */
         final Box aseBox = Box.createVerticalBox();
-        aseBox.add(createComboBoxWithLabel("Low Edge", MPEG7Constants.LOW_EDGE), 0);
-        aseBox.add(createComboBoxWithLabel("High Edge", MPEG7Constants.HIGH_EDGE), 1);
-        aseBox.add(createComboBoxWithLabel("Resolution", MPEG7Constants.RESOLUTION), 2);
-        aseBox.add(createComboBoxWithLabel("dbScale", MPEG7Constants.DB_SCALE), 3);
-        aseBox.add(createComboBoxWithLabel("Normalize", MPEG7Constants.NORMALIZE), 4);
+        aseBox.add(createComponent("Low Edge", new JComboBox<Float>(m_aseLowEdge)));
+        m_aseLowEdge.setSelectedItem(MPEG7Constants.LOW_EDGE[1]);
+        aseBox.add(createComponent("High Edge", new JComboBox<Float>(m_aseHighEdge)));
+        m_aseHighEdge.setSelectedItem(MPEG7Constants.HIGH_EDGE[3]);
+        aseBox.add(createComponent("Resolution", new JComboBox<Float>(m_aseResolution)));
+        m_aseResolution.setSelectedItem(MPEG7Constants.RESOLUTION[2]);
+        aseBox.add(createComponent("dbScale", new JComboBox<Boolean>(m_aseDbScale)));
+        m_aseDbScale.setSelectedItem(MPEG7Constants.DB_SCALE[0]);
+        aseBox.add(createComponent("Normalize", new JComboBox<String>(m_aseNormalize)));
+        m_aseNormalize.setSelectedItem(MPEG7Constants.NORMALIZE[0]);
         m_components.put(MPEG7FeatureType.AUDIO_SPECTRUM_ENVELOPE, aseBox);
 
         /* Audio Spectrum Flatness */
         final Box asfBox = Box.createVerticalBox();
-        asfBox.add(createComboBoxWithLabel("Low Edge", MPEG7Constants.LOW_EDGE), 0);
-        asfBox.add(createComboBoxWithLabel("High Edge", MPEG7Constants.HIGH_EDGE), 1);
+        asfBox.add(createComponent("Low Edge", new JComboBox<Float>(m_asfLowEdge)));
+        m_asfLowEdge.setSelectedItem(MPEG7Constants.LOW_EDGE[3]);
+        asfBox.add(createComponent("High Edge", new JComboBox<Float>(m_asfHighEdge)));
+        m_asfHighEdge.setSelectedItem(MPEG7Constants.HIGH_EDGE[3]);
         m_components.put(MPEG7FeatureType.AUDIO_SPECTRUM_FLATNESS, asfBox);
 
         /* Audio Fundamental Frequency */
         final Box affBox = Box.createVerticalBox();
-        affBox.add(createIntSpinnerWithLabel("Low Limit", 50, 1, 16000, 1));
-        affBox.add(createIntSpinnerWithLabel("High Limit", 12000, 1, 16000, 1));
+        affBox.add(createComponent("Low Limit", new JSpinner(m_affLowLimit)));
+        affBox.add(createComponent("High Limit", new JSpinner(m_affHighLimit)));
         m_components.put(MPEG7FeatureType.AUDIO_FUNDAMENTAL_FREQUENCY, affBox);
 
-        /* Signal Envelope -> used by Temporal Centroid & Log Attack Time */
-        final Box signalEnvelopeBox = Box.createVerticalBox();
-        signalEnvelopeBox.add(createIntSpinnerWithLabel("Window Length", 10, 1, 100, 1));
-        signalEnvelopeBox.add(createIntSpinnerWithLabel("Window Slide", 5, 1, 100, 1));
-        m_components.put(MPEG7FeatureType.TEMPORAL_CENTROID, signalEnvelopeBox);
+        /* Temporal Centroid */
+        final Box tcBox = Box.createVerticalBox();
+        tcBox.add(createComponent("Window Length", new JSpinner(m_seWindowLength)));
+        tcBox.add(createComponent("Window Slide", new JSpinner(m_seWindowSlide)));
+        m_components.put(MPEG7FeatureType.TEMPORAL_CENTROID, tcBox);
 
-        final JPanel latPanel = createDoubleSpinnerWithLabel("Threshold", 0.02, 0.01, 10, 0.01);
-        m_components.put(MPEG7FeatureType.LOG_ATTACK_TIME, latPanel);
+        /* Log Attack Time */
+        final Box latBox = Box.createVerticalBox();
+        latBox.add(createComponent("Window Length", new JSpinner(m_seWindowLength)));
+        latBox.add(createComponent("Window Slide", new JSpinner(m_seWindowSlide)));
+        latBox.add(createComponent("Threshold", new JSpinner(m_latThreshold)));
+        m_components.put(MPEG7FeatureType.LOG_ATTACK_TIME, latBox);
 
         /* Harmonic Peaks -> used by Harmonic Spectral [Centroid | Deviation | Spread | Variation] */
         final Box harmonicPeaksBox = Box.createVerticalBox();
-        harmonicPeaksBox.add(createDoubleSpinnerWithLabel("Non-Harmonicity", 0.15, 0.01, 10, 0.01));
-        harmonicPeaksBox.add(createDoubleSpinnerWithLabel("Threshold", 0.0, 0.0, 10, 0.1));
+        harmonicPeaksBox.add(createComponent("Non-Harmonicity", new JSpinner(m_hpNonHarmonicity)));
+        harmonicPeaksBox.add(createComponent("Threshold", new JSpinner(m_hpThreshold)));
         m_components.put(MPEG7FeatureType.HARMONIC_SPECTRAL_CENTROID, harmonicPeaksBox);
         m_components.put(MPEG7FeatureType.HARMONIC_SPECTRAL_DEVIATION, harmonicPeaksBox);
         m_components.put(MPEG7FeatureType.HARMONIC_SPECTRAL_SPREAD, harmonicPeaksBox);
@@ -115,33 +165,21 @@ class ParameterUtils {
 
         /* Audio Spectrum Basis & Projection */
         final Box asbpBox = Box.createVerticalBox();
-        asbpBox.add(createIntSpinnerWithLabel("Number of Frames", 0, 0, 100, 1));
-        asbpBox.add(createIntSpinnerWithLabel("Number of Functions", 8, 0, 100, 1));
+        asbpBox.add(createComponent("Low Edge", new JComboBox<Float>(m_aseLowEdge)));
+        asbpBox.add(createComponent("High Edge", new JComboBox<Float>(m_aseHighEdge)));
+        asbpBox.add(createComponent("Resolution", new JComboBox<Float>(m_aseResolution)));
+        asbpBox.add(createComponent("dbScale", new JComboBox<Boolean>(m_aseDbScale)));
+        asbpBox.add(createComponent("Normalize", new JComboBox<String>(m_aseNormalize)));
+        asbpBox.add(createComponent("Number of Frames", new JSpinner(m_asbpNrOfFrames)));
+        asbpBox.add(createComponent("Number of Functions", new JSpinner(m_asbpNrOfFunctions)));
         m_components.put(MPEG7FeatureType.AUDIO_SPECTRUM_BASIS, asbpBox);
-    }
-
-    private static JPanel createComboBoxWithLabel(final String text, final Object[] list){
-        final JComboBox<Object> cmbBox = new JComboBox<Object>(list);
-        return createComponent(text, cmbBox);
-    }
-
-    private static JPanel createIntSpinnerWithLabel(final String text,
-            final int initialValue, final int min, final int max, final int step){
-        final SpinnerModel model = new SpinnerNumberModel(initialValue, min, max, step);
-        return createComponent(text, new JSpinner(model));
-    }
-
-    private static JPanel createDoubleSpinnerWithLabel(final String text,
-            final double initialValue, final double min, final double max,
-            final double step){
-        final SpinnerModel model = new SpinnerNumberModel(initialValue, min, max, step);
-        return createComponent(text, new JSpinner(model));
+        m_components.put(MPEG7FeatureType.AUDIO_SPECTRUM_PROJECTION, asbpBox);
     }
 
     private static JPanel createComponent(final String text, final Component comp){
         final JPanel panel = new JPanel();
         final JLabel label = new JLabel(text + ":");
-        label.setPreferredSize(new Dimension(150, label.getPreferredSize().height));
+        label.setPreferredSize(new Dimension(160, label.getPreferredSize().height));
         comp.setPreferredSize(new Dimension(150, comp.getPreferredSize().height));
         panel.add(label);
         panel.add(comp);
@@ -149,27 +187,7 @@ class ParameterUtils {
     }
 
     Component getComponent(final MPEG7FeatureType type){
-        switch (type) {
-            case LOG_ATTACK_TIME:
-                final Box latBox = Box.createVerticalBox();
-                latBox.add(m_components.get(MPEG7FeatureType.TEMPORAL_CENTROID));
-                latBox.add(m_components.get(MPEG7FeatureType.LOG_ATTACK_TIME));
-                return latBox;
-            case AUDIO_SPECTRUM_BASIS:
-                return createAudioSpectrumBasisProjectionBox();
-            case AUDIO_SPECTRUM_PROJECTION:
-                return createAudioSpectrumBasisProjectionBox();
-            default:
-                break;
-        }
-        return m_components.get(type);
-    }
-
-    private Box createAudioSpectrumBasisProjectionBox(){
-        final Box box = Box.createVerticalBox();
-        box.add(m_components.get(MPEG7FeatureType.AUDIO_SPECTRUM_ENVELOPE));
-        box.add(m_components.get(MPEG7FeatureType.AUDIO_SPECTRUM_BASIS));
-        return box;
+       return m_components.get(type);
     }
 
 }
